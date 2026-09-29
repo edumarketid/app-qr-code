@@ -2,8 +2,8 @@ const CACHE_NAME = 'absensi-app-cache-v2.26';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './Laporan.html',
-  './KartuQRCode.html',
+  './laporan.html',
+  './kartuqrcode.html',
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
