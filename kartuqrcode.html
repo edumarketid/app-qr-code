@@ -21,7 +21,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
 .primary{background:#0b3b82;color:#fff}
 .secondary{background:#e2e8f0;color:#172033}
 .green{background:#16a05d;color:#fff}
-.status{margin-top:10px;font-size:12px;color:#64748b}
+.status{margin-top:10px;font-size:12px;color:#64748b;font-weight:bold}
 .settings{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .logo-box{background:#f8fafc;border:1px dashed #94a3b8;border-radius:12px;padding:12px}
 .logo-preview{height:90px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;background:#fff;border-radius:9px;border:1px solid #e2e8f0;overflow:hidden}
@@ -66,7 +66,6 @@ body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
 .frame-tunggal{border:1.1mm solid var(--accent,#0b3b82);border-radius:2mm}
 .frame-sudut{border:1.1mm solid var(--accent,#0b3b82);border-radius:4mm}
 .frame-minimalis{border:.45mm solid #cbd5e1;border-radius:1.5mm}
-.frame-minimalis:before,.frame-minimalis:after{opacity:.9}
 .theme-biru{--accent:#0b3b82;--secondary:#f5b700;--ink:#0b2c63}
 .theme-hijau{--accent:#087443;--secondary:#eab308;--ink:#075331}
 .theme-merah{--accent:#a61b1b;--secondary:#f59e0b;--ink:#721c1c}
@@ -74,21 +73,9 @@ body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
 .theme-emas{--accent:#9a6a00;--secondary:#d4a72c;--ink:#624500}
 .theme-hitam{--accent:#111827;--secondary:#94a3b8;--ink:#111827}
 .empty{padding:40px;text-align:center;color:#94a3b8}
-@media(max-width:900px){
-  .toolbar{grid-template-columns:repeat(2,1fr)}
-  .cards{grid-template-columns:repeat(2,85.6mm);justify-content:start;overflow-x:auto;padding-bottom:10px}
-  .student-row{grid-template-columns:30px 1fr 80px 1fr 65px}
-}
-@media(max-width:600px){
-  .toolbar,.settings{grid-template-columns:1fr}
-  .list-head{align-items:stretch;flex-direction:column}
-  .list-head input{width:100%}
-  .wrap{padding:10px}
-}
 @media print{
   html,body{background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
   *{ -webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
-  body{background:#fff}
   .no-print{display:none!important}
   .wrap{padding:0;max-width:none}
   .preview-wrap{border:0;box-shadow:none;padding:0;margin:0;overflow:visible}
@@ -105,7 +92,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
 <div class="wrap">
   <section class="top no-print">
     <h1>Cetak Kartu Pelajar Siswa</h1>
-    <p>Ukuran kartu KTP • 10 kartu per halaman A4 • Layout dipertahankan secara rapi.</p>
+    <p>Ukuran kartu KTP • 10 kartu per halaman A4 • Layout Siap Cetak.</p>
     <div class="settings">
       <div>
         <div class="field"><label>Nama Sekolah</label><input id="namaSekolah" value=""></div>
@@ -143,7 +130,6 @@ body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
 </div>
 
 <script>
-// KONFIGURASI URL API GAS
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVGAsO-sG7E9bHsSxQ-M16EykkO6jc6QpLzDY7sWg9qEHIbpk9Re32IGgDn1qPOmJ_/exec";
 
 let siswa = [], selected = new Set(), logoKiriData = '', logoKananData = '';
@@ -159,12 +145,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function esc(x){ return String(x == null ? '' : x).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
 function escAttr(x){ return String(x == null ? '' : x).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-function setStatus(t, bad = false){ const e = document.getElementById('status'); e.textContent = t; e.style.color = bad ? '#b91c1c' : '#64748b'; }
+function setStatus(t, bad = false){ const e = document.getElementById('status'); e.textContent = t; e.style.color = bad ? '#b91c1c' : '#166534'; }
 
 async function muatDataDanPengaturan() {
-  setStatus('Memuat data siswa & pengaturan...');
+  setStatus('Memuat data siswa & pengaturan dari server...');
   try {
-    const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`);
+    const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`, { redirect: 'follow' });
     const data = await res.json();
     
     if (data && data.success) {
@@ -182,12 +168,12 @@ async function muatDataDanPengaturan() {
       showLogo('kanan', logoKananData);
       
       renderDaftar();
-      setStatus('Data ' + siswa.length + ' siswa & pengaturan berhasil dimuat.');
+      setStatus('Berhasil memuat ' + siswa.length + ' data siswa!');
     } else {
       setStatus('Gagal memuat data dari server.', true);
     }
   } catch(err) {
-    setStatus('Error: ' + err.message, true);
+    setStatus('Error koneksi: ' + err.message, true);
   }
 }
 
@@ -226,13 +212,13 @@ async function simpanPengaturan() {
   try {
     const response = await fetch(GAS_WEB_APP_URL, {
       method: 'POST',
-      mode: 'cors',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      redirect: 'follow'
     });
     const result = await response.json();
     if (result && result.success) {
-      setStatus(result.message || 'Pengaturan berhasil disimpan!');
+      setStatus(result.message || 'Pengaturan & logo berhasil disimpan!');
       muatDataDanPengaturan();
     } else {
       setStatus((result && result.message) || 'Gagal menyimpan.', true);
