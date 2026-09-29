@@ -306,7 +306,6 @@
     async function loadMasterSettings() {
       const imgLogo = document.getElementById("img-logo-kop");
 
-      // Prioritas 1: Ambil URL dari Server Google Sheet
       try {
         const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_LAPORAN_SETTINGS`);
         const data = await res.json();
@@ -316,7 +315,7 @@
           const schoolName = st.SCHOOL_NAME || "SMK NEGERI 1 WAKATOBI";
           const principalName = st.PRINCIPAL_NAME || "-";
           const principalNip = st.PRINCIPAL_NIP || "-";
-          const logoUrl = st.LOGO_KOP || localStorage.getItem("LOGO_KOP");
+          const logoUrl = st.LOGO_KOP || localStorage.getItem("LOGO_KOP") || "";
 
           document.getElementById("kop-nama-sekolah").innerText = schoolName;
           document.getElementById("ttd-nama-kepsek").innerText = principalName;
@@ -325,15 +324,12 @@
           if (logoUrl) {
             imgLogo.src = logoUrl;
             imgLogo.classList.remove("hidden");
-            localStorage.setItem("LOGO_KOP", logoUrl);
           }
 
-          // Populate Kelas Dropdown
           const classes = [...new Set((data.students || []).map(s => s.kelas))].filter(Boolean).sort();
           document.getElementById("filter-kelas").innerHTML = '<option value="ALL">Semua Kelas</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
         }
       } catch (e) {
-        // Fallback jika offline: Pakai LocalStorage
         const localLogo = localStorage.getItem("LOGO_KOP");
         if (localLogo) {
           imgLogo.src = localLogo;
@@ -352,7 +348,7 @@
       if (!file) return;
 
       const statusEl = document.getElementById("logo-upload-status");
-      statusEl.innerText = "Mengompres & Mengunggah...";
+      statusEl.innerText = "Mengunggah...";
 
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -361,7 +357,6 @@
         imgLogo.src = base64Data;
         imgLogo.classList.remove("hidden");
 
-        // Kirim ke Google Apps Script untuk disimpan permanen ke Google Drive
         fetch(GAS_WEB_APP_URL, {
           method: "POST",
           mode: "cors",
@@ -371,14 +366,14 @@
         .then(res => res.json())
         .then(result => {
           if (result.success) {
-            statusEl.innerText = "Logo Tersimpan Permanen!";
+            statusEl.innerText = "Tersimpan Permanen!";
             loadMasterSettings();
           } else {
-            statusEl.innerText = "Tersimpan Lokal.";
+            statusEl.innerText = "Tersimpan.";
           }
         })
         .catch(() => {
-          statusEl.innerText = "Tersimpan Lokal (Offline).";
+          statusEl.innerText = "Tersimpan Lokal.";
         });
       };
       reader.readAsDataURL(file);
