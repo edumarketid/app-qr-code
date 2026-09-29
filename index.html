@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b3c5d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Sistem Absensi Murid - v2.59 Presisi</title>
+  <title>Sistem Absensi Murid - v2.60 Presisi</title>
   <link rel="manifest" href='data:application/manifest+json,{"name":"Sistem Absensi Murid","short_name":"AbsensiQR","start_url":"./index.html","display":"standalone","background_color":"#0b3c5d","theme_color":"#0b3c5d","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"512x512","type":"image/png"}]}'>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -37,7 +37,7 @@
             <span id="status-text" class="text-xs font-semibold">Memeriksa...</span>
           </div>
           <div class="flex items-center justify-end gap-1 mt-0.5">
-            <span id="app-version-tag" class="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-1.5 py-0.2 rounded-md border border-emerald-500/30">v2.59</span>
+            <span id="app-version-tag" class="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-1.5 py-0.2 rounded-md border border-emerald-500/30">v2.60</span>
             <span id="app-role-badge" onclick="handleRoleBadgeClick()" class="text-[10px] font-bold text-amber-300 bg-amber-950/60 px-1.5 py-0.2 rounded-md border border-amber-500/30 cursor-pointer select-none">PETUGAS</span>
           </div>
         </div>
@@ -778,7 +778,6 @@
       return match ? match[0] : str;
     }
 
-    // PEMBARUAN: Membuka file HTML lokal yang dihosting di GitHub Pages
     function bukaHalamanLaporan() { window.open("./laporan.html", "_blank"); }
     function bukaHalamanCetakQR() { window.open("./kartuqrcode.html", "_blank"); }
 
@@ -802,17 +801,29 @@
       alert("Kembali ke mode Petugas.");
     }
 
-    function processAdminLogin() {
+    async function processAdminLogin() {
       const pass = document.getElementById("admin-pass-input").value;
-      if (pass === "123456") {
-        currentUserRole = "ADMIN";
-        localStorage.setItem("USER_ROLE", "ADMIN");
-        document.getElementById("admin-pass-input").value = "";
-        updateRoleUI();
-        hideLoginModal();
-        alert("Login Admin Berhasil!");
-      } else {
-        alert("Password Salah!");
+      if (!pass) return alert("Masukkan password admin!");
+
+      try {
+        const res = await fetch(GAS_WEB_APP_URL, {
+          method: "POST", mode: "cors", headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "VERIFY_ADMIN_PASSWORD", password: pass })
+        });
+        const result = await res.json();
+        
+        if (result.success) {
+          currentUserRole = "ADMIN";
+          localStorage.setItem("USER_ROLE", "ADMIN");
+          document.getElementById("admin-pass-input").value = "";
+          updateRoleUI();
+          hideLoginModal();
+          alert("Login Admin Berhasil!");
+        } else {
+          alert("Password Salah!");
+        }
+      } catch (e) {
+        alert("Gagal memverifikasi password admin!");
       }
     }
 
