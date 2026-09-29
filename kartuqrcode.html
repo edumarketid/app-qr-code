@@ -103,7 +103,6 @@
           logoKiriUrl = st.LOGO_KARTU_KIRI || localStorage.getItem("LOGO_KARTU_KIRI") || "";
           logoKananUrl = st.LOGO_KARTU_KANAN || localStorage.getItem("LOGO_KARTU_KANAN") || "";
 
-          // Populate Kelas
           const classes = [...new Set(allStudentsData.map(s => s.kelas))].filter(Boolean).sort();
           document.getElementById("filter-kelas-kartu").innerHTML = '<option value="ALL">Semua Kelas</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
 
@@ -166,7 +165,6 @@
         </div>
       `).join('');
 
-      // Generate QR Code untuk setiap siswa
       filtered.forEach((s, idx) => {
         new QRCode(document.getElementById(`qrcode-${idx}`), {
           text: s.qr_key || s.id_siswa,
@@ -184,7 +182,7 @@
       if (!file) return;
 
       const statusEl = document.getElementById("kartu-upload-status");
-      statusEl.innerText = "Mengunggah & Menyimpan Logo...";
+      statusEl.innerText = "Mengunggah Logo...";
 
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -206,14 +204,14 @@
         .then(res => res.json())
         .then(result => {
           if (result.success) {
-            statusEl.innerText = "Logo Berhasil Disimpan Permanen!";
+            statusEl.innerText = "Logo Disimpan Permanen!";
             loadKartuData();
           } else {
-            statusEl.innerText = "Gagal menyimpan logo ke Drive.";
+            statusEl.innerText = "Gagal menyimpan.";
           }
         })
         .catch(() => {
-          statusEl.innerText = "Tersimpan Lokal (Offline).";
+          statusEl.innerText = "Tersimpan Lokal.";
         });
       };
       reader.readAsDataURL(file);
