@@ -6,24 +6,100 @@
   <meta name="theme-color" content="#0b3c5d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Sistem Absensi Murid - v2.59 Presisi</title>
-  <link rel="manifest" href='data:application/manifest+json,{"name":"Sistem Absensi Murid","short_name":"AbsensiQR","start_url":"./index.html","display":"standalone","background_color":"#0b3c5d","theme_color":"#0b3c5d","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"512x512","type":"image/png"}]}'>
+  <title>Sistem Absensi Murid & Cetak - v2.60 Full</title>
+  <link rel="manifest" href="./manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f1f5f9; color: #172033; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; border-radius: 1rem; }
+
+    /* STYLE KARTU QR CODE */
+    .cards-grid { display: grid; grid-template-columns: repeat(2, 85.6mm); gap: 2mm; justify-content: center; }
+    .card-item { width: 85.6mm; height: 53.98mm; position: relative; overflow: hidden; background: #fff; flex: none; color: var(--ink,#0b2c63); border: 1.3mm solid var(--accent,#0b3b82); border-radius: 4mm; box-shadow: 0 1.5mm 4mm rgba(15,23,42,.18); page-break-inside: avoid; }
+    .card-item:before { content:""; position:absolute; left:0; top:0; width:22mm; height:20mm; background:var(--accent,#0b3b82); clip-path:polygon(0 0,100% 0,42% 100%,0 100%); }
+    .card-item:after { content:""; position:absolute; right:0; bottom:0; width:22mm; height:18mm; background:var(--accent,#0b3b82); clip-path:polygon(100% 0,100% 100%,0 100%); }
+    .accent-stripe { position:absolute; left:4mm; top:0; width:3mm; height:20mm; background:var(--secondary,#f5b700); transform:skewX(-18deg); z-index:2; }
+    .card-logo { position:absolute; top:2.5mm; width:13mm; height:13mm; object-fit:contain; z-index:3; }
+    .card-logo.left { left:5mm; } .card-logo.right { right:5mm; }
+    .card-school { position:absolute; top:2.8mm; left:19mm; right:19mm; text-align:center; font-size:4.1mm; line-height:1.05; font-weight:900; color:var(--ink,#0b2c63); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:3; }
+    .card-line { position:absolute; top:10.5mm; left:17mm; width:8mm; height:.5mm; background:var(--secondary,#f5b700); z-index:3; }
+    .card-line.right { left:auto; right:17mm; }
+    .card-title { position:absolute; top:10mm; left:19mm; right:19mm; height:7mm; background:var(--accent,#0b3b82); border-radius:5mm; text-align:center; color:#fff; font-size:3.1mm; font-weight:900; line-height:7mm; z-index:3; }
+    .card-photo { position:absolute; left:3.8mm; top:18.2mm; width:17mm; height:23mm; border:0.5mm solid var(--accent,#0b3b82); border-radius:2mm; padding:1mm; z-index:3; background:#fff; }
+    .card-photo-in { width:100%; height:100%; border:0.3mm solid #cbd5e1; border-radius:1.5mm; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#789; font-size:3mm; font-weight:800; }
+    .card-details { position:absolute; left:23.5mm; top:17.8mm; right:25mm; z-index:3; }
+    .card-lbl { font-size:1.85mm; font-weight:900; color:var(--accent,#0b3b82); margin-bottom:.3mm; }
+    .card-val { font-size:2.2mm; font-weight:800; color:#111827; margin-bottom:1.4mm; white-space:nowrap; overflow:visible; text-overflow:clip; line-height:1.0; }
+    .card-qr { position:absolute; right:3.7mm; top:18.4mm; width:25mm; height:25mm; background:#fff; display:flex; align-items:center; justify-content:center; z-index:4; }
+    .card-qr canvas, .card-qr img { width:25mm!important; height:25mm!important; }
+    .card-footer-l { position:absolute; left:4mm; bottom:2.6mm; font-size:2.1mm; color:#64748b; z-index:4; }
+    .card-footer-r { position:absolute; right:4mm; bottom:2.6mm; font-size:2.1mm; color:#64748b; z-index:4; }
+    .theme-biru { --accent:#0b3b82; --secondary:#f5b700; --ink:#0b2c63; }
+
+    /* STYLE LAPORAN TABEL */
+    .kop-header { text-align:center; border-bottom:3px double #111; padding-bottom:2px; margin-bottom:15px; }
+    .kop-header img { max-width:95%; max-height:90px; object-fit:contain; }
+    .report-table { width:100%; border-collapse:collapse; font-size:11px; border:1px solid #94a3b8; }
+    .report-table th { background:#eef4fb; padding:8px; text-align:left; border:1px solid #94a3b8; font-weight:800; }
+    .report-table td { padding:7px; border:1px solid #cbd5e1; vertical-align:middle; }
+    .principal-sign { width:280px; margin:30px 20px 0 auto; text-align:left; font-size:12px; }
+
+    /* MEDIA PRINT FULLSCREEN KERTAS A4/F4 */
+    @media print {
+      html, body {
+        background: #fff !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      header, nav, .no-print, #login-modal, #menu-modal, #add-student-modal, #edit-student-modal, #tl-action-modal, #student-detail-modal {
+        display: none !important;
+      }
+      #app-viewport-container {
+        max-width: none !important;
+        height: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
+      }
+      .print-area-section {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .print-page-qr {
+        width: 210mm;
+        min-height: 297mm;
+        display: grid;
+        grid-template-columns: repeat(2, 85.6mm);
+        grid-template-rows: repeat(5, 53.98mm);
+        gap: 1mm 2mm;
+        justify-content: center;
+        align-content: center;
+        page-break-after: always;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 5mm;
+      }
+    }
   </style>
 </head>
 <body class="flex justify-center items-center h-full p-0 sm:p-4">
   <div id="app-viewport-container" class="w-full max-w-md h-full sm:h-[840px] bg-white flex flex-col shadow-2xl overflow-hidden sm:rounded-3xl relative border border-gray-200">
     
     <!-- HEADER -->
-    <header class="bg-[#0b3c5d] text-white py-3.5 px-4 z-40 shadow-md flex-shrink-0">
+    <header class="bg-[#0b3c5d] text-white py-3.5 px-4 z-40 shadow-md flex-shrink-0 no-print">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-3">
           <div class="min-w-0 flex-1">
@@ -37,7 +113,7 @@
             <span id="status-text" class="text-xs font-semibold">Memeriksa...</span>
           </div>
           <div class="flex items-center justify-end gap-1 mt-0.5">
-            <span id="app-version-tag" class="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-1.5 py-0.2 rounded-md border border-emerald-500/30">v2.59</span>
+            <span id="app-version-tag" class="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-1.5 py-0.2 rounded-md border border-emerald-500/30">v2.60</span>
             <span id="app-role-badge" onclick="handleRoleBadgeClick()" class="text-[10px] font-bold text-amber-300 bg-amber-950/60 px-1.5 py-0.2 rounded-md border border-amber-500/30 cursor-pointer select-none">PETUGAS</span>
           </div>
         </div>
@@ -47,7 +123,7 @@
     <div class="flex-1 overflow-y-auto no-scrollbar relative bg-slate-50">
       
       <!-- SCANNER -->
-      <main id="view-scanner" class="h-full flex flex-col justify-between bg-gray-900 overflow-hidden">
+      <main id="view-scanner" class="h-full flex flex-col justify-between bg-gray-900 overflow-hidden no-print">
         <div class="flex-1 relative flex flex-col items-center justify-center p-4 bg-black">
           <div class="w-full h-full max-h-[420px] overflow-hidden rounded-2xl relative flex items-center justify-center bg-gray-800 border border-gray-700">
             <div id="reader" class="w-full h-full"></div>
@@ -102,7 +178,7 @@
       </main>
 
       <!-- HASIL SCAN -->
-      <main id="view-success" class="p-4 hidden">
+      <main id="view-success" class="p-4 hidden no-print">
         <div id="status-card-box" class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center shadow-sm space-y-2">
           <h3 id="res-nama" class="font-bold text-gray-900 text-lg truncate">-</h3>
           <p class="text-xs text-gray-600">NISN: <span id="res-nisn" class="font-bold">-</span> | Kelas: <span id="res-kelas" class="font-bold">-</span></p>
@@ -115,7 +191,7 @@
       </main>
 
       <!-- DASHBOARD UTAMA -->
-      <main id="view-dashboard" class="p-4 space-y-3.5 hidden pb-8">
+      <main id="view-dashboard" class="p-4 space-y-3.5 hidden pb-8 no-print">
         <div class="flex items-center justify-between">
           <div>
             <h2 class="font-bold text-lg text-gray-900">Dashboard Utama</h2>
@@ -187,7 +263,7 @@
       </main>
 
       <!-- UNGGAH SISWA KOLEKTIF -->
-      <main id="view-upload-batch" class="p-4 hidden">
+      <main id="view-upload-batch" class="p-4 hidden no-print">
         <div class="mb-3">
           <h2 class="font-bold text-lg text-gray-900">Unggah Siswa Kolektif</h2>
           <p class="text-xs text-gray-500">Import Data Masal Dari File CSV / Excel</p>
@@ -221,7 +297,7 @@
       </main>
 
       <!-- MASTER SISWA -->
-      <main id="view-students" class="p-4 hidden">
+      <main id="view-students" class="p-4 hidden no-print">
         <div class="flex items-center justify-between mb-2">
           <div>
             <h2 class="font-bold text-lg text-gray-900">Data Master Siswa</h2>
@@ -253,7 +329,7 @@
       </main>
 
       <!-- MONITORING -->
-      <main id="view-monitoring" class="p-4 hidden">
+      <main id="view-monitoring" class="p-4 hidden no-print">
         <div class="flex items-center justify-between mb-3">
           <div>
             <h2 class="font-bold text-lg text-gray-900">Monitoring Absensi</h2>
@@ -328,8 +404,93 @@
         </div>
       </main>
 
+      <!-- LAPORAN REKAP DISATUKAN -->
+      <main id="view-laporan" class="p-4 hidden print-area-section">
+        <div class="no-print space-y-3 mb-4">
+          <div class="flex items-center justify-between">
+            <h2 class="font-bold text-lg text-gray-900">Rekap Laporan Absensi</h2>
+            <button onclick="window.print()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-print"></i> Cetak Laporan F4
+            </button>
+          </div>
+          <div class="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-600 mb-1">Jenis Laporan</label>
+                <select id="lap-jenis" onchange="buatLaporanIntegrasi()" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl text-xs font-bold">
+                  <option value="HARIAN">Harian</option>
+                  <option value="BULANAN">Bulanan</option>
+                  <option value="SEMESTER">Semester</option>
+                  <option value="TAHUNAN">Tahunan</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-600 mb-1">Tanggal / Periode</label>
+                <input type="date" id="lap-tanggal" onchange="buatLaporanIntegrasi()" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl text-xs font-bold">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="area-cetak-laporan" class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+          <div class="kop-header">
+            <h2 id="lap-sekolah-title" class="font-black text-lg">SMK NEGERI 1 WAKATOBI</h2>
+            <p class="text-xs text-gray-500">Laporan Rekapitulasi Presensi Siswa</p>
+          </div>
+          <h3 id="lap-judul-cetak" class="text-center font-bold text-sm mb-1">DAFTAR HADIR HARIAN</h3>
+          <p id="lap-periode-cetak" class="text-center text-xs text-gray-600 mb-4">-</p>
+
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>NISN</th>
+                <th>Nama Siswa</th>
+                <th>Kelas</th>
+                <th>Pagi</th>
+                <th>Siang</th>
+                <th>Status Akhir</th>
+              </tr>
+            </thead>
+            <tbody id="lap-tbody">
+              <tr><td colspan="7" class="text-center py-4 text-gray-400">Klik "Segarkan" untuk memuat data.</td></tr>
+            </tbody>
+          </table>
+
+          <div class="principal-sign">
+            <p><span id="lap-tempat-ttd">Wakatobi</span>, <span id="lap-tanggal-ttd">-</span></p>
+            <p class="mb-12">Kepala Sekolah,</p>
+            <p><b id="lap-nama-kepala">Nama Kepala Sekolah</b></p>
+            <p>NIP. <span id="lap-nip-kepala">-</span></p>
+          </div>
+        </div>
+      </main>
+
+      <!-- CETAK KARTU QR CODE DISATUKAN -->
+      <main id="view-kartuqrcode" class="p-4 hidden print-area-section">
+        <div class="no-print space-y-3 mb-4">
+          <div class="flex items-center justify-between">
+            <h2 class="font-bold text-lg text-gray-900">Cetak Kartu QR Code</h2>
+            <button onclick="window.print()" class="bg-emerald-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+              <i class="fa-solid fa-print"></i> Cetak Kartu A4/F4
+            </button>
+          </div>
+          <div class="bg-white p-3 rounded-2xl border border-gray-200 shadow-sm space-y-2">
+            <button onclick="pilihSemuaSiswaKartu()" class="w-full bg-blue-50 text-blue-700 py-2 rounded-xl text-xs font-bold border border-blue-200">
+              Generate Semua Kartu Siswa
+            </button>
+          </div>
+        </div>
+
+        <div id="area-cetak-kartu">
+          <div id="cards-container" class="cards-grid">
+            <div class="text-center text-xs text-gray-400 py-6 col-span-2">Klik tombol di atas untuk memuat kartu siswa.</div>
+          </div>
+        </div>
+      </main>
+
       <!-- FITUR PINDAH & NAIK KELAS -->
-      <main id="view-promotion" class="p-4 hidden">
+      <main id="view-promotion" class="p-4 hidden no-print">
         <div class="mb-3">
           <h2 class="font-bold text-lg text-gray-900">Pindah & Naik Kelas</h2>
           <p class="text-xs text-gray-500">Kelola Tingkat / Rombel Siswa</p>
@@ -351,7 +512,7 @@
       </main>
 
       <!-- TENTANG APLIKASI -->
-      <main id="view-about" class="p-4 hidden">
+      <main id="view-about" class="p-4 hidden no-print">
         <div class="mb-3">
           <h2 class="font-bold text-lg text-gray-900">Tentang Aplikasi</h2>
           <p class="text-xs text-gray-500">Penyimpanan Cache & Informasi Kontak</p>
@@ -390,7 +551,7 @@
       </main>
 
       <!-- TINDAK LANJUT -->
-      <main id="view-tindak-lanjut" class="p-4 hidden">
+      <main id="view-tindak-lanjut" class="p-4 hidden no-print">
         <div class="flex items-center justify-between mb-2">
           <div>
             <h2 class="font-bold text-lg text-gray-900">Tindak Lanjut Siswa</h2>
@@ -426,7 +587,7 @@
       </main>
 
       <!-- EDIT DATA SISWA / MANAJEMEN SISWA -->
-      <main id="view-edit-students" class="p-4 hidden">
+      <main id="view-edit-students" class="p-4 hidden no-print">
         <div class="flex items-center justify-between mb-3">
           <div>
             <h2 class="font-bold text-lg text-gray-900">Kelola Data Siswa</h2>
@@ -443,7 +604,7 @@
       </main>
 
       <!-- HARI LIBUR -->
-      <main id="view-hari-libur" class="p-4 hidden">
+      <main id="view-hari-libur" class="p-4 hidden no-print">
         <div class="mb-3">
           <h2 class="font-bold text-lg text-gray-900">Atur Hari Libur</h2>
           <p class="text-xs text-gray-500">Tandai Hari Libur Nasional & Sekolah</p>
@@ -463,7 +624,7 @@
       </main>
 
       <!-- PENGATURAN SYSTEM -->
-      <main id="view-settings" class="p-4 hidden">
+      <main id="view-settings" class="p-4 hidden no-print">
         <div class="mb-3">
           <h2 class="font-bold text-lg text-gray-900">Pengaturan System</h2>
           <p class="text-xs text-gray-500">Konfigurasi Jam Presensi & Identitas Sekolah</p>
@@ -520,7 +681,7 @@
     </div>
 
     <!-- MODAL EDIT DATA SISWA -->
-    <div id="edit-student-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden">
+    <div id="edit-student-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden no-print">
       <div class="bg-white rounded-t-3xl p-5 space-y-3 shadow-2xl max-h-[85%] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-gray-100 pb-2">
           <h3 class="font-bold text-gray-900 text-sm">Edit Data Siswa</h3>
@@ -555,7 +716,7 @@
     </div>
 
     <!-- MODAL POPUP FORM PROSES TINDAK LANJUT SISWA -->
-    <div id="tl-action-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden">
+    <div id="tl-action-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden no-print">
       <div class="bg-white rounded-t-3xl p-5 space-y-3 shadow-2xl">
         <div class="flex items-center justify-between border-b border-gray-100 pb-2">
           <h3 class="font-bold text-gray-900 text-sm">Form Penanganan Siswa</h3>
@@ -580,7 +741,7 @@
     </div>
 
     <!-- MODAL DETAIL RINGKAS SISWA -->
-    <div id="student-detail-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden">
+    <div id="student-detail-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden no-print">
       <div class="bg-white rounded-t-3xl p-5 space-y-3 shadow-2xl max-h-[80%] overflow-y-auto">
         <div class="flex items-center justify-between border-b border-gray-100 pb-2">
           <div>
@@ -597,7 +758,7 @@
     </div>
 
     <!-- MODAL TAMBAH SISWA -->
-    <div id="add-student-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden">
+    <div id="add-student-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden no-print">
       <div class="bg-white rounded-t-3xl p-5 space-y-3 shadow-2xl">
         <div class="flex items-center justify-between border-b border-gray-100 pb-2">
           <h3 class="font-bold text-gray-900 text-sm">Tambah Siswa Baru</h3>
@@ -624,7 +785,7 @@
     </div>
 
     <!-- MODAL LOGIN ADMIN -->
-    <div id="login-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-center p-6 hidden">
+    <div id="login-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-center p-6 hidden no-print">
       <div class="bg-white rounded-3xl p-5 space-y-3 shadow-2xl">
         <div class="flex items-center justify-between border-b border-gray-100 pb-2">
           <h3 class="font-bold text-gray-900 text-sm">Login Admin</h3>
@@ -637,7 +798,7 @@
     </div>
 
     <!-- MODAL MENU UTAMA -->
-    <div id="menu-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden">
+    <div id="menu-modal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 flex flex-col justify-end hidden no-print">
       <div class="bg-white rounded-t-3xl p-5 space-y-4 shadow-2xl">
         <div class="flex items-center justify-between border-b border-gray-100 pb-3">
           <div class="flex items-center space-x-2">
@@ -651,7 +812,7 @@
     </div>
 
     <!-- BOTTOM NAVBAR -->
-    <nav class="bg-white border-t border-gray-200 px-2 py-1.5 flex justify-between items-center text-center z-40 flex-shrink-0">
+    <nav class="bg-white border-t border-gray-200 px-2 py-1.5 flex justify-between items-center text-center z-40 flex-shrink-0 no-print">
       <button id="nav-students" onclick="toggleView('students')" class="flex-1 flex flex-col items-center">
         <i class="fa-solid fa-user-group text-sm text-teal-600"></i>
         <span class="text-[10px] font-bold text-teal-700 mt-0.5">Data Siswa</span>
@@ -778,9 +939,71 @@
       return match ? match[0] : str;
     }
 
-    // PEMBARUAN: Membuka file HTML lokal yang dihosting di GitHub Pages
-    function bukaHalamanLaporan() { window.open("./laporan.html", "_blank"); }
-    function bukaHalamanCetakQR() { window.open("./kartuqrcode.html", "_blank"); }
+    /* KODE FUNGSI SINKRONISASI LAPORAN & CETAK KARTU INTEGRASI */
+    async function buatLaporanIntegrasi() {
+      const jenis = document.getElementById('lap-jenis').value;
+      const tgl = document.getElementById('lap-tanggal').value;
+      const tbody = document.getElementById('lap-tbody');
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-blue-600"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Memuat data laporan dari GAS...</td></tr>`;
+
+      try {
+        const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_LAPORAN_DATA&jenis=${jenis}&tanggal=${tgl}`);
+        const data = await res.json();
+        if (data && data.success && data.rows) {
+          document.getElementById('lap-judul-cetak').innerText = `DAFTAR HADIR ${jenis}`;
+          document.getElementById('lap-periode-cetak').innerText = `Periode: ${data.periode || tgl}`;
+          if (data.rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-400">Tidak ada data absensi.</td></tr>`;
+            return;
+          }
+          tbody.innerHTML = data.rows.map((r, i) => `<tr><td>${i + 1}</td><td>${r.nisn || '-'}</td><td><b>${r.nama}</b></td><td>${r.kelas}</td><td>${r.jam_pagi || '-'}</td><td>${r.jam_siang || '-'}</td><td><b>${r.status_akhir || 'HADIR'}</b></td></tr>`).join('');
+        }
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-rose-600">Gagal memuat laporan.</td></tr>`;
+      }
+    }
+
+    async function pilihSemuaSiswaKartu() {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = `<div class="text-center text-xs text-blue-600 py-6 col-span-2"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Mengambil data & me-render QR...</div>`;
+
+      try {
+        const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`);
+        const data = await res.json();
+        if (data && data.success && data.students) {
+          const list = data.students || [];
+          container.innerHTML = list.map(s => `
+            <div class="card-item theme-biru">
+              <div class="accent-stripe"></div>
+              <div class="card-school">${data.settings?.SCHOOL_NAME || 'SMK NEGERI 1 WAKATOBI'}</div>
+              <div class="card-line"></div><div class="card-line right"></div>
+              <div class="card-title">KARTU PELAJAR</div>
+              <div class="card-photo"><div class="card-photo-in">FOTO</div></div>
+              <div class="card-details">
+                <div class="card-lbl">NAMA</div><div class="card-val"><b>${s.nama}</b></div>
+                <div class="card-lbl">NISN</div><div class="card-val">${s.nisn || '-'}</div>
+                <div class="card-lbl">KELAS</div><div class="card-val">${s.kelas || '-'}</div>
+              </div>
+              <div class="card-qr" id="qr_card_${s.id_siswa}"></div>
+              <div class="card-footer-l">KARTU IDENTITAS</div>
+              <div class="card-footer-r">SMKN 1 WAKATOBI</div>
+            </div>
+          `).join('');
+
+          requestAnimationFrame(() => {
+            list.forEach(s => {
+              const el = document.getElementById(`qr_card_${s.id_siswa}`);
+              if (el) {
+                el.innerHTML = '';
+                new QRCode(el, { text: s.qr_key || s.id_siswa, width: 100, height: 100 });
+              }
+            });
+          });
+        }
+      } catch(e) {
+        container.innerHTML = `<div class="text-center text-xs text-rose-600 py-6 col-span-2">Gagal me-render kartu cetak.</div>`;
+      }
+    }
 
     function showLoginModal() { document.getElementById("login-modal").classList.remove("hidden"); }
     function hideLoginModal() { document.getElementById("login-modal").classList.add("hidden"); }
@@ -850,8 +1073,8 @@
         { label: "Atur Hari Libur", icon: "fa-calendar-day", color: "amber", action: "toggleView('hari-libur')", adminOnly: true },
         { label: "Tindak Lanjut", icon: "fa-user-shield", color: "rose", action: "toggleView('tindak-lanjut')", adminOnly: true },
         { label: "Pindah/Naik Kelas", icon: "fa-graduation-cap", color: "purple", action: "toggleView('promotion')", adminOnly: true },
-        { label: "Laporan Rekap", icon: "fa-file-invoice", color: "blue", action: "bukaHalamanLaporan()", adminOnly: true },
-        { label: "Cetak QR Code", icon: "fa-print", color: "indigo", action: "bukaHalamanCetakQR()", adminOnly: true },
+        { label: "Laporan Rekap", icon: "fa-file-invoice", color: "blue", action: "toggleView('laporan'); buatLaporanIntegrasi();", adminOnly: true },
+        { label: "Cetak QR Code", icon: "fa-print", color: "indigo", action: "toggleView('kartuqrcode'); pilihSemuaSiswaKartu();", adminOnly: true },
         { label: "Tentang Aplikasi", icon: "fa-circle-info", color: "teal", action: "toggleView('about')", adminOnly: false },
         { label: "Pengaturan", icon: "fa-gear", color: "purple", action: "toggleView('settings')", adminOnly: true }
       ];
@@ -1462,7 +1685,7 @@
     }
 
     function toggleView(viewName) {
-      const views = ['scanner', 'success', 'students', 'monitoring', 'dashboard', 'about', 'tindak-lanjut', 'hari-libur', 'settings', 'promotion', 'edit-students', 'upload-batch'];
+      const views = ['scanner', 'success', 'students', 'monitoring', 'dashboard', 'about', 'tindak-lanjut', 'hari-libur', 'settings', 'promotion', 'edit-students', 'upload-batch', 'laporan', 'kartuqrcode'];
       views.forEach(v => {
         const el = document.getElementById('view-' + v);
         if (el) el.classList.add('hidden');
@@ -2730,6 +2953,8 @@
 
       document.getElementById("monitoring-date-filter").value = todayRealStr;
       document.getElementById("dashboard-date-filter").value = todayRealStr;
+      document.getElementById("lap-tanggal").value = todayRealStr;
+      document.getElementById('lap-tanggal-ttd').innerText = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
       await initDatabase();
       await loadStudentsView();
