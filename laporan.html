@@ -25,7 +25,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172033}
 .report-item.active{background:#dbeafe;border-color:#1976d2;color:#0b3b82}
 .logo-preview{min-height:120px;border:1px dashed #b8c5d6;border-radius:12px;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;color:#64748b;font-size:12px}
 .logo-preview img{max-width:100%;max-height:110px;object-fit:contain}
-.status{font-size:12px;color:#64748b;margin-top:8px}.success{color:#166534}.danger{color:#b91c1c}
+.status{font-size:12px;color:#64748b;margin-top:8px;font-weight:bold}.success{color:#166534}.danger{color:#b91c1c}
 .kpi{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:15px}
 .kpi-box{background:#f8fafc;border:1px solid #dbe4ef;border-radius:12px;padding:11px}
 .kpi-label{font-size:9px;color:#64748b;font-weight:800}.kpi-value{font-size:21px;font-weight:900;margin-top:5px}
@@ -36,12 +36,9 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172033}
 .sakit{background:#ede9fe;color:#5b21b6}.izin{background:#dbeafe;color:#1d4ed8}.kegiatan{background:#cffafe;color:#155e75}
 .empty{padding:30px;text-align:center;color:#64748b}
 .kop{text-align:center;border-bottom:3px double #111;padding-bottom:2px;margin-bottom:15px;}
-.kop img{max-width:95%;max-height:90px;object-fit:contain}.school{font-size:20px;font-weight:900}
-.note{background:#f8fafc;border-left:4px solid #1976d2;padding:10px;border-radius:8px;font-size:11px;color:#475569}
+.kop img{max-width:95%;max-height:90px;object-fit:contain}
 .hidden{display:none}
-@media(max-width:1100px){.grid{grid-template-columns:1fr}.kpi{grid-template-columns:repeat(4,1fr)}}
-@media(max-width:700px){.row,.row3{grid-template-columns:1fr}.report-list{grid-template-columns:1fr 1fr}.kpi{grid-template-columns:repeat(2,1fr)}.wrap{padding:10px}.head{flex-direction:column;align-items:flex-start}}
-@media print{ body{background:#fff}.no-print{display:none!important}.wrap{max-width:none;padding:0} .panel{box-shadow:none;border:0;padding:0}.print-area{display:block!important} .report-page{page-break-after:auto}.table-wrap{overflow:visible} th{position:static}.kop{margin-top:0} .kpi{display:none!important} .filter-cetak{font-size:11px;margin:0 0 3px} table{font-size:10.5px;border:1.2px solid #64748b} th{border:1px solid #64748b;padding:7px 6px} td{border:1px solid #94a3b8;padding:6px} .principal{width:280px;margin:20px 20px 0 auto;text-align:left} }
+@media print{ body{background:#fff}.no-print{display:none!important}.wrap{max-width:none;padding:0} .panel{box-shadow:none;border:0;padding:0} .table-wrap{overflow:visible} th{position:static}.kop{margin-top:0} .kpi{display:none!important} .filter-cetak{font-size:11px;margin:0 0 3px} table{font-size:10.5px;border:1.2px solid #64748b} th{border:1px solid #64748b;padding:7px 6px} td{border:1px solid #94a3b8;padding:6px} .principal{width:280px;margin:20px 20px 0 auto;text-align:left} }
 </style>
 </head>
 <body>
@@ -53,7 +50,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172033}
 <div class="grid no-print">
 <section class="panel">
   <h2>Identitas Cetak</h2>
-  <div class="desc">Kop sekolah dan identitas kepala sekolah akan tersimpan untuk laporan berikutnya.</div>
+  <div class="desc">Kop sekolah dan identitas kepala sekolah akan tersimpan ke database.</div>
   <div class="field"><label>Upload Kop Sekolah</label><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div>
   <div class="logo-preview" id="logoPreview">Belum ada kop sekolah.</div>
   <div class="row">
@@ -129,7 +126,6 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172033}
 </div>
 
 <script>
-// KONFIGURASI URL API GAS
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVGAsO-sG7E9bHsSxQ-M16EykkO6jc6QpLzDY7sWg9qEHIbpk9Re32IGgDn1qPOmJ_/exec";
 
 let logoData = ''; 
@@ -143,7 +139,7 @@ function today(){ return new Date().toISOString().slice(0,10); }
 
 async function loadSettings(){
   try {
-    const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`);
+    const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`, { redirect: 'follow' });
     const data = await res.json();
     if (data && data.success) {
       const students = data.students || [];
@@ -213,9 +209,9 @@ async function simpanPengaturan(){
   try {
     const res = await fetch(GAS_WEB_APP_URL, {
       method: 'POST',
-      mode: 'cors',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      redirect: 'follow'
     });
     const r = await res.json();
     el('statusSimpan').className = 'status success';
@@ -248,7 +244,7 @@ function pilihJenis(j){
 }
 
 async function buatLaporan(){
-  el('loading').textContent = 'Mengambil data laporan...';
+  el('loading').textContent = 'Mengambil data laporan dari server...';
   const query = new URLSearchParams({
     action: "GET_LAPORAN_DATA",
     jenis: jenis,
@@ -262,7 +258,7 @@ async function buatLaporan(){
   });
   
   try {
-    const res = await fetch(`${GAS_WEB_APP_URL}?${query.toString()}`);
+    const res = await fetch(`${GAS_WEB_APP_URL}?${query.toString()}`, { redirect: 'follow' });
     const r = await res.json();
     el('loading').textContent = '';
     if(!r || (!r.success && !r.berhasil)){ alert((r && (r.message || r.pesan)) || 'Data laporan tidak tersedia.'); return; }
