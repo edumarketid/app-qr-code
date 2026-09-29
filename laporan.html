@@ -1,330 +1,393 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Laporan Absensi Siswa</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172033}
-.wrap{max-width:1500px;margin:auto;padding:18px}
-.head,.panel{background:#fff;border:1px solid #dbe4ef;border-radius:16px;box-shadow:0 6px 22px rgba(15,40,80,.08)}
-.head{padding:18px;margin-bottom:15px;display:flex;justify-content:space-between;gap:15px;align-items:center}
-.head h1{margin:0;color:#0b3b82;font-size:23px}.head p{margin:5px 0 0;color:#64748b;font-size:12px}
-.actions{display:flex;gap:8px}.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-.primary{background:#1976d2;color:#fff}.light{background:#eef4fb;color:#0b3b82}
-.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:15px}
-.panel{padding:18px;margin-bottom:15px}.panel h2{margin:0 0 5px;color:#0b3b82;font-size:17px}
-.desc{font-size:11px;color:#64748b;margin-bottom:12px}
-.row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.field{margin-bottom:12px}.field label{display:block;font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;margin-bottom:5px}
-.field input,.field select{width:100%;height:40px;border:1px solid #dbe4ef;border-radius:9px;padding:0 11px;background:#fff}
-.report-list{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.report-item{border:1px solid #dbe4ef;border-radius:12px;padding:12px;background:#f8fafc;cursor:pointer;text-align:center;font-weight:800;color:#334155}
-.report-item.active{background:#dbeafe;border-color:#1976d2;color:#0b3b82}
-.logo-preview{min-height:120px;border:1px dashed #b8c5d6;border-radius:12px;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;color:#64748b;font-size:12px}
-.logo-preview img{max-width:100%;max-height:110px;object-fit:contain}
-.status{font-size:12px;color:#64748b;margin-top:8px;font-weight:bold}.success{color:#166534}.danger{color:#b91c1c}
-.kpi{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:15px}
-.kpi-box{background:#f8fafc;border:1px solid #dbe4ef;border-radius:12px;padding:11px}
-.kpi-label{font-size:9px;color:#64748b;font-weight:800}.kpi-value{font-size:21px;font-weight:900;margin-top:5px}
-.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:11px;border:1px solid #94a3b8}th{background:#eef4fb;padding:8px;text-align:left;position:sticky;top:0;z-index:2;border:1px solid #94a3b8;font-weight:800}td{padding:7px;border:1px solid #cbd5e1;vertical-align:middle}.filter-cetak{text-align:center;font-size:11px;font-weight:700;margin:0 0 3px;color:#334155}
-.principal{width:280px;margin:32px 20px 0 auto;text-align:left;font-size:12px;min-height:95px;}
-.badge{display:inline-block;padding:4px 7px;border-radius:20px;font-size:9px;font-weight:800}
-.hadir{background:#dcfce7;color:#166534}.terlambat{background:#fef3c7;color:#92400e}.bolos,.alpa{background:#fee2e2;color:#991b1b}
-.sakit{background:#ede9fe;color:#5b21b6}.izin{background:#dbeafe;color:#1d4ed8}.kegiatan{background:#cffafe;color:#155e75}
-.empty{padding:30px;text-align:center;color:#64748b}
-.kop{text-align:center;border-bottom:3px double #111;padding-bottom:2px;margin-bottom:15px;}
-.kop img{max-width:95%;max-height:90px;object-fit:contain}
-.hidden{display:none}
-@media print{ body{background:#fff}.no-print{display:none!important}.wrap{max-width:none;padding:0} .panel{box-shadow:none;border:0;padding:0} .table-wrap{overflow:visible} th{position:static}.kop{margin-top:0} .kpi{display:none!important} .filter-cetak{font-size:11px;margin:0 0 3px} table{font-size:10.5px;border:1.2px solid #64748b} th{border:1px solid #64748b;padding:7px 6px} td{border:1px solid #94a3b8;padding:6px} .principal{width:280px;margin:20px 20px 0 auto;text-align:left} }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laporan Rekapitulasi Absensi Murid</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background-color: white !important; font-size: 11pt; }
+      .print-container { shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+      @page { size: A4 portrait; margin: 1.5cm 1cm 1.5cm 1cm; }
+    }
+    .kop-border { border-bottom: 3px double #000; }
+  </style>
 </head>
-<body>
-<div class="wrap">
-<div class="head no-print">
-  <div><h1>LAPORAN ABSENSI SISWA</h1><p>Harian, mingguan, bulanan, semester, dan tahunan.</p></div>
-  <div class="actions"><button class="btn light" onclick="window.close()">Tutup</button><button class="btn primary" onclick="cetak()">Cetak Laporan</button></div>
-</div>
-<div class="grid no-print">
-<section class="panel">
-  <h2>Identitas Cetak</h2>
-  <div class="desc">Kop sekolah dan identitas kepala sekolah akan tersimpan ke database.</div>
-  <div class="field"><label>Upload Kop Sekolah</label><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"></div>
-  <div class="logo-preview" id="logoPreview">Belum ada kop sekolah.</div>
-  <div class="row">
-    <div class="field"><label>Nama Sekolah</label><input id="namaSekolahGlobal" placeholder="Nama sekolah"></div><div class="field"><label>Nama Kepala Sekolah</label><input id="namaKepala" placeholder="Nama lengkap"></div>
-    <div class="field"><label>NIP Kepala Sekolah</label><input id="nipKepala" placeholder="NIP"></div>
-  </div>
-  <div class="field"><label>Tempat Tanda Tangan</label><input id="tempatTtd" value="" placeholder="Contoh: Wakatobi"></div>
-  <button class="btn primary" onclick="simpanPengaturan()">Simpan Pengaturan</button>
-  <div id="statusSimpan" class="status"></div>
-</section>
-<section class="panel">
-  <h2>Jenis Laporan</h2>
-  <div class="desc">Pilih bentuk laporan, kemudian tentukan periode dan filter.</div>
-  <div class="report-list">
-    <div class="report-item active" data-jenis="HARIAN" onclick="pilihJenis('HARIAN')">Harian</div>
-    <div class="report-item" data-jenis="MINGGUAN" onclick="pilihJenis('MINGGUAN')">Mingguan</div>
-    <div class="report-item" data-jenis="BULANAN" onclick="pilihJenis('BULANAN')">Bulanan</div>
-    <div class="report-item" data-jenis="SEMESTER" onclick="pilihJenis('SEMESTER')">Semester</div>
-    <div class="report-item" data-jenis="TAHUNAN" onclick="pilihJenis('TAHUNAN')">Tahunan</div>
-  </div>
-  <div class="row3" style="margin-top:12px">
-    <div class="field" id="tanggalBox"><label>Tanggal</label><input type="date" id="tanggal"></div>
-    <div class="field hidden" id="mulaiBox"><label>Tanggal Mulai</label><input type="date" id="tanggalMulai"></div>
-    <div class="field hidden" id="selesaiBox"><label>Tanggal Selesai</label><input type="date" id="tanggalSelesai"></div>
-  </div>
-  <div class="row3">
-    <div class="field" id="bulanBox"><label>Bulan</label><select id="bulan"><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select></div>
-    <div class="field"><label>Tahun</label><select id="tahun"><option value="2026">2026</option><option value="2025">2025</option></select></div>
-    <div class="field" id="semesterBox"><label>Semester</label><select id="semester"><option value="1">Semester 1 (Jul-Des)</option><option value="2">Semester 2 (Jan-Jun)</option></select></div>
-  </div>
-</section>
-</div>
-<section class="panel no-print">
-  <h2>Filter Siswa</h2>
-  <div class="row3">
-    <div class="field"><label>Kelas</label><select id="kelas"><option value="">Semua Kelas</option></select></div>
-  </div>
-  <div class="actions">
-    <button class="btn primary" onclick="buatLaporan()">Tampilkan Laporan</button>
-    <button class="btn light" onclick="resetForm()">Reset</button>
-  </div>
-  <div id="loading" class="status"></div>
-</section>
-<section class="panel print-area report-page" id="reportArea">
-  <div class="kop">
-    <div id="logoCetak"></div>
-  </div>
-  <h2 id="judulLaporan" style="text-align:center;margin:0 0 5px">DAFTAR HADIR HARIAN</h2>
-  <div id="filterCetak" class="filter-cetak">Kelas: Semua Kelas</div>
-  <div id="periodeCetak" style="text-align:center;font-size:12px;margin-bottom:15px">-</div>
-  <div class="kpi">
-    <div class="kpi-box"><div class="kpi-label">HADIR</div><div class="kpi-value" id="kHadir">0</div></div>
-    <div class="kpi-box"><div class="kpi-label">TERLAMBAT</div><div class="kpi-value" id="kTerlambat">0</div></div>
-    <div class="kpi-box"><div class="kpi-label">BOLOS</div><div class="kpi-value" id="kBolos">0</div></div>
-    <div class="kpi-box"><div class="kpi-label">ALPA</div><div class="kpi-value" id="kAlpa">0</div></div>
-    <div class="kpi-box"><div class="kpi-label">SAKIT</div><div class="kpi-value" id="kSakit">0</div></div>
-    <div class="kpi-box"><div class="kpi-label">IZIN</div><div class="kpi-value" id="kIzin">0</div></div>
-    <div class="kpi-box"><div class="kpi-label">PERSENTASE</div><div class="kpi-value" id="kPersen">0%</div></div>
-  </div>
-  <div class="table-wrap">
-    <table>
-      <thead id="thead"></thead>
-      <tbody id="tbody"><tr><td class="empty">Belum ada laporan. Silakan pilih periode lalu klik Tampilkan Laporan.</td></tr></tbody>
-    </table>
-  </div>
-  <div class="principal">
-    <div><span id="tempatCetak"></span>, <span id="tanggalCetak"></span></div>
-    <div>Kepala <span id="sekolahCetak">Sekolah</span>,</div><br><br><br><br><br><br>
-    <b id="kepalaCetak">Nama Kepala Sekolah</b><br>
-    NIP. <span id="nipCetak">-</span>
-  </div>
-</section>
-</div>
+<body class="bg-gray-100 min-h-screen p-2 sm:p-6 text-gray-800">
 
-<script>
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0wSQS50V0qen_O29TXSE1ngwEao4SMpJyQuUlUISLz5uxvmqqkqQnsAmmoRL0M8Cmqw/exec";
+  <!-- TOOLBAR AKSI (NO PRINT) -->
+  <div class="max-w-4xl mx-auto bg-white p-4 rounded-2xl shadow-md mb-6 no-print space-y-4 border border-gray-200">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-3">
+      <div>
+        <h1 class="font-bold text-lg text-blue-900">Pencetakan Laporan Rekap Absensi</h1>
+        <p class="text-xs text-gray-500">Filter jenis laporan dan cetak dokumen resmi</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-2">
+          <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
+        </button>
+        <button onclick="window.close()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-xl text-xs font-bold">
+          Tutup
+        </button>
+      </div>
+    </div>
 
-let logoData = ''; 
-let jenis = 'HARIAN';
+    <!-- FILTER LAPORAN -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+      <div>
+        <label class="block font-bold text-gray-700 mb-1">Jenis Laporan</label>
+        <select id="filter-jenis" onchange="toggleFilterInputs()" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl font-bold text-gray-800">
+          <option value="HARIAN">Laporan Harian</option>
+          <option value="MINGGUAN">Laporan Mingguan</option>
+          <option value="BULANAN">Laporan Bulanan</option>
+          <option value="SEMESTER">Laporan Semester</option>
+          <option value="TAHUNAN">Laporan Tahunan</option>
+        </select>
+      </div>
 
-function el(id){ return document.getElementById(id); }
-function esc(x){ return String(x==null?'':x).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-function fmt(x){ return new Intl.NumberFormat('id-ID').format(Number(x)||0); }
-function pct(x){ return (Number(x)||0).toLocaleString('id-ID',{maximumFractionDigits:2})+'%'; }
-function today(){ return new Date().toISOString().slice(0,10); }
+      <div>
+        <label class="block font-bold text-gray-700 mb-1">Filter Kelas</label>
+        <select id="filter-kelas" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl font-bold text-gray-800">
+          <option value="ALL">Semua Kelas</option>
+        </select>
+      </div>
 
-async function loadSettings(){
-  try {
-    const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`, { redirect: 'follow' });
-    const data = await res.json();
-    if (data && data.success) {
-      const students = data.students || [];
-      const s = data.settings || {};
+      <!-- INPUT TANGGAL HARIAN -->
+      <div id="box-date-harian">
+        <label class="block font-bold text-gray-700 mb-1">Pilih Tanggal</label>
+        <input type="date" id="input-tgl-harian" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl font-bold text-gray-800">
+      </div>
+
+      <!-- INPUT MINGGUAN -->
+      <div id="box-date-mingguan" class="hidden sm:col-span-2 grid grid-cols-2 gap-2">
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Tanggal Mulai</label>
+          <input type="date" id="input-tgl-mulai" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl font-bold text-gray-800">
+        </div>
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Tanggal Selesai</label>
+          <input type="date" id="input-tgl-selesai" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl font-bold text-gray-800">
+        </div>
+      </div>
+
+      <!-- INPUT BULANAN / SEMESTER / TAHUNAN -->
+      <div id="box-date-periodik" class="hidden sm:col-span-2 grid grid-cols-2 gap-2">
+        <div id="sub-box-bulan">
+          <label class="block font-bold text-gray-700 mb-1">Bulan</label>
+          <select id="input-bulan" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl font-bold text-gray-800">
+            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+            <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+          </select>
+        </div>
+        <div id="sub-box-semester" class="hidden">
+          <label class="block font-bold text-gray-700 mb-1">Semester</label>
+          <select id="input-semester" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl font-bold text-gray-800">
+            <option value="1">Semester Ganjil (1)</option>
+            <option value="2">Semester Genap (2)</option>
+          </select>
+        </div>
+        <div id="sub-box-tahun">
+          <label class="block font-bold text-gray-700 mb-1">Tahun</label>
+          <input type="number" id="input-tahun" value="2026" class="w-full p-2 bg-slate-50 border border-gray-200 rounded-xl font-bold text-gray-800">
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between border-t border-gray-100 pt-3">
+      <!-- UNGGAH KOP / LOGO -->
+      <div class="flex items-center gap-2">
+        <label class="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer transition">
+          <i class="fa-solid fa-image"></i> Unggah Logo Kop Baru
+          <input type="file" id="input-logo-kop" accept="image/*" onchange="uploadLogoKop(event)" class="hidden">
+        </label>
+        <span id="logo-upload-status" class="text-[10px] text-gray-500"></span>
+      </div>
+
+      <button onclick="loadLaporanData()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5">
+        <i class="fa-solid fa-magnifying-glass"></i> Tampilkan Laporan
+      </button>
+    </div>
+  </div>
+
+  <!-- AREA CETAK LAPORAN -->
+  <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl border border-gray-200 print-container">
+    
+    <!-- KOP SURAT -->
+    <div class="flex items-center justify-between pb-3 mb-4 kop-border">
+      <div class="w-20 h-20 flex items-center justify-center">
+        <img id="img-logo-kop" src="" alt="Logo Sekolah" class="max-w-full max-h-full object-contain hidden" onerror="this.classList.add('hidden')">
+      </div>
+      <div class="text-center flex-1 px-4">
+        <h3 id="kop-instansi-pemerintah" class="text-xs font-bold uppercase tracking-wider text-gray-700">PEMERINTAH PROVINSI SULAWESI TENGGARA</h3>
+        <h2 id="kop-nama-sekolah" class="text-lg font-black uppercase text-gray-900 leading-tight">SMK NEGERI 1 WAKATOBI</h2>
+        <p id="kop-alamat-sekolah" class="text-[10px] text-gray-600 italic mt-0.5">Jl. Raya Popalia, Kec. Bingo, Kab. Wakatobi, Sulawesi Tenggara</p>
+      </div>
+      <div class="w-20"></div>
+    </div>
+
+    <!-- JUDUL LAPORAN -->
+    <div class="text-center mb-6">
+      <h3 id="doc-judul-laporan" class="text-sm font-black uppercase underline decoration-2 underline-offset-4 text-gray-900">LAPORAN REKAPITULASI ABSENSI MURID</h3>
+      <p id="doc-sub-periode" class="text-xs font-semibold text-gray-600 mt-1">Periode: -</p>
+    </div>
+
+    <!-- RINGKASAN REKAPITULASI -->
+    <div class="grid grid-cols-6 gap-2 mb-4 text-center text-xs font-bold">
+      <div class="p-2 bg-emerald-50 border border-emerald-200 rounded-lg"><span class="block text-[9px] text-emerald-700">HADIR</span><span id="sum-hadir" class="text-sm font-black text-emerald-900">0</span></div>
+      <div class="p-2 bg-amber-50 border border-amber-200 rounded-lg"><span class="block text-[9px] text-amber-700">TERLAMBAT</span><span id="sum-terlambat" class="text-sm font-black text-amber-900">0</span></div>
+      <div class="p-2 bg-rose-50 border border-rose-200 rounded-lg"><span class="block text-[9px] text-rose-700">BOLOS</span><span id="sum-bolos" class="text-sm font-black text-rose-900">0</span></div>
+      <div class="p-2 bg-blue-50 border border-blue-200 rounded-lg"><span class="block text-[9px] text-blue-700">SAKIT</span><span id="sum-sakit" class="text-sm font-black text-blue-900">0</span></div>
+      <div class="p-2 bg-indigo-50 border border-indigo-200 rounded-lg"><span class="block text-[9px] text-indigo-700">IZIN</span><span id="sum-izin" class="text-sm font-black text-indigo-900">0</span></div>
+      <div class="p-2 bg-red-50 border border-red-200 rounded-lg"><span class="block text-[9px] text-red-700">ALPA</span><span id="sum-alpa" class="text-sm font-black text-red-900">0</span></div>
+    </div>
+
+    <!-- TABEL HASIL LAPORAN -->
+    <div class="overflow-x-auto mb-8">
+      <table class="w-full border-collapse border border-gray-400 text-xs">
+        <thead>
+          <tr id="table-header-row" class="bg-gray-100 text-gray-800 border-b border-gray-400">
+            <!-- Dynamic Headers -->
+          </tr>
+        </thead>
+        <tbody id="table-body-rows">
+          <tr><td colspan="8" class="text-center py-6 text-gray-400">Memuat data laporan...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TANDA TANGAN KEPALA SEKOLAH -->
+    <div class="flex justify-end text-xs">
+      <div class="text-center w-64 space-y-12">
+        <div>
+          <p id="ttd-tempat-tanggal">Wakatobi, -</p>
+          <p class="font-bold">Kepala Sekolah,</p>
+        </div>
+        <div>
+          <p id="ttd-nama-kepsek" class="font-bold underline text-gray-900">-</p>
+          <p id="ttd-nip-kepsek" class="text-gray-600">NIP. -</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0wSQS50V0qen_O29TXSE1ngwEao4SMpJyQuUlUISLz5uxvmqqkqQnsAmmoRL0M8Cmqw/exec";
+
+    function toggleFilterInputs() {
+      const jenis = document.getElementById("filter-jenis").value;
       
-      el('namaSekolahGlobal').value = s.SCHOOL_NAME || s.namaSekolah || '';
-      el('sekolahCetak').textContent = s.SCHOOL_NAME || s.namaSekolah || 'Sekolah';
-      el('namaKepala').value = s.PRINCIPAL_NAME || s.namaKepala || '';
-      el('nipKepala').value = s.PRINCIPAL_NIP || s.nipKepala || '';
-      el('tempatTtd').value = s.TEMPAT_TTD || s.tempatTtd || '';
-      
-      if (s.LOGO_KOP || s.logoData) {
-        logoData = s.LOGO_KOP || s.logoData;
-        showLogo(logoData);
+      document.getElementById("box-date-harian").classList.add("hidden");
+      document.getElementById("box-date-mingguan").classList.add("hidden");
+      document.getElementById("box-date-periodik").classList.add("hidden");
+      document.getElementById("sub-box-bulan").classList.add("hidden");
+      document.getElementById("sub-box-semester").classList.add("hidden");
+
+      if (jenis === "HARIAN") {
+        document.getElementById("box-date-harian").classList.remove("hidden");
+      } else if (jenis === "MINGGUAN") {
+        document.getElementById("box-date-mingguan").classList.remove("hidden");
+      } else {
+        document.getElementById("box-date-periodik").classList.remove("hidden");
+        if (jenis === "BULANAN") {
+          document.getElementById("sub-box-bulan").classList.remove("hidden");
+        } else if (jenis === "SEMESTER") {
+          document.getElementById("sub-box-semester").classList.remove("hidden");
+        }
       }
-      
-      renderIdentity({
-        namaKepala: el('namaKepala').value,
-        nipKepala: el('nipKepala').value
-      });
-
-      const classes = [...new Set(students.map(std => std.kelas))].filter(Boolean).sort();
-      fill('kelas', classes, 'Semua Kelas');
     }
-  } catch(e) {
-    console.error("Gagal memuat pengaturan:", e);
-  }
-  
-  el('tanggal').value = today();
-  el('tanggalMulai').value = today();
-  el('tanggalSelesai').value = today();
-  el('bulan').value = String(new Date().getMonth() + 1);
-}
 
-function fill(id, a, first){
-  const e = el(id), old = e.value;
-  e.innerHTML = '<option value="">' + esc(first || 'Pilih') + '</option>';
-  (a || []).forEach(x => e.insertAdjacentHTML('beforeend', '<option value="' + esc(x) + '">' + esc(x) + '</option>'));
-  if([...e.options].some(o => o.value === old)) e.value = old;
-}
+    async function loadLaporanData() {
+      const jenis = document.getElementById("filter-jenis").value;
+      const kelas = document.getElementById("filter-kelas").value;
+      const tglHarian = document.getElementById("input-tgl-harian").value;
+      const tglMulai = document.getElementById("input-tgl-mulai").value;
+      const tglSelesai = document.getElementById("input-tgl-selesai").value;
+      const bulan = document.getElementById("input-bulan").value;
+      const tahun = document.getElementById("input-tahun").value;
+      const semester = document.getElementById("input-semester").value;
 
-el('logoFile').addEventListener('change', function(){
-  const f = this.files && this.files[0]; if(!f) return;
-  if(f.size > 1500000){ alert('Ukuran kop maksimal 1,5 MB.'); this.value = ''; return; }
-  const rd = new FileReader(); rd.onload = () => { logoData = rd.result; showLogo(logoData); }; rd.readAsDataURL(f);
-});
+      let url = `${GAS_WEB_APP_URL}?action=GET_LAPORAN_DATA&jenis=${jenis}&kelas=${kelas}`;
 
-function showLogo(src){
-  el('logoPreview').innerHTML = src ? '<img src="' + src + '" alt="Kop sekolah">' : 'Belum ada kop sekolah.';
-  el('logoCetak').innerHTML = src ? '<img src="' + src + '" alt="Kop sekolah">' : '';
-}
+      if (jenis === "HARIAN") url += `&tanggal=${tglHarian}`;
+      else if (jenis === "MINGGUAN") url += `&tanggalMulai=${tglMulai}&tanggalSelesai=${tglSelesai}`;
+      else if (jenis === "BULANAN") url += `&bulan=${bulan}&tahun=${tahun}`;
+      else if (jenis === "SEMESTER") url += `&semester=${semester}&tahun=${tahun}`;
+      else if (jenis === "TAHUNAN") url += `&tahun=${tahun}`;
 
-async function simpanPengaturan(){
-  const data = {
-    action: "SAVE_SETTINGS",
-    settings: {
-      LOGO_KOP: logoData,
-      SCHOOL_NAME: el('namaSekolahGlobal').value.trim(),
-      PRINCIPAL_NAME: el('namaKepala').value.trim(),
-      PRINCIPAL_NIP: el('nipKepala').value.trim(),
-      TEMPAT_TTD: el('tempatTtd').value.trim()
+      document.getElementById("table-body-rows").innerHTML = `<tr><td colspan="8" class="text-center py-6 text-gray-500 font-bold"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Mengambil data dari server...</td></tr>`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.success) {
+          renderLaporanTable(data);
+        } else {
+          alert("Gagal memuat laporan: " + data.message);
+        }
+      } catch (e) {
+        alert("Gagal terhubung ke Google Apps Script.");
+      }
     }
-  };
-  
-  el('statusSimpan').textContent = 'Menyimpan & mengunggah kop ke Google Drive...';
-  
-  try {
-    const res = await fetch(GAS_WEB_APP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(data),
-      redirect: 'follow'
-    });
-    const r = await res.json();
-    el('statusSimpan').className = 'status success';
-    el('statusSimpan').textContent = r && r.success ? 'Pengaturan laporan & Kop berhasil disimpan!' : (r && r.message || 'Gagal menyimpan.');
-    renderIdentity({
-      namaKepala: data.settings.PRINCIPAL_NAME,
-      nipKepala: data.settings.PRINCIPAL_NIP
-    });
-    el('sekolahCetak').textContent = data.settings.SCHOOL_NAME || 'Sekolah';
-  } catch(e) {
-    el('statusSimpan').className = 'status danger';
-    el('statusSimpan').textContent = e.message;
-  }
-}
 
-function renderIdentity(d){
-  el('kepalaCetak').textContent = d.namaKepala || 'Nama Kepala Sekolah';
-  el('nipCetak').textContent = d.nipKepala || '-';
-}
+    function renderLaporanTable(data) {
+      document.getElementById("doc-sub-periode").innerText = `Periode: ${data.periode}`;
 
-function pilihJenis(j){
-  jenis = j;
-  document.querySelectorAll('.report-item').forEach(x => x.classList.toggle('active', x.dataset.jenis === j));
-  el('tanggalBox').classList.toggle('hidden', j !== 'HARIAN');
-  el('mulaiBox').classList.toggle('hidden', j !== 'MINGGUAN');
-  el('selesaiBox').classList.toggle('hidden', j !== 'MINGGUAN');
-  el('bulanBox').classList.toggle('hidden', j !== 'BULANAN');
-  el('semesterBox').classList.toggle('hidden', j !== 'SEMESTER');
-  el('judulLaporan').textContent = 'LAPORAN ABSENSI ' + j;
-}
+      document.getElementById("sum-hadir").innerText = data.summary.hadir || 0;
+      document.getElementById("sum-terlambat").innerText = data.summary.terlambat || 0;
+      document.getElementById("sum-bolos").innerText = data.summary.bolos || 0;
+      document.getElementById("sum-sakit").innerText = data.summary.sakit || 0;
+      document.getElementById("sum-izin").innerText = data.summary.izin || 0;
+      document.getElementById("sum-alpa").innerText = data.summary.alpa || 0;
 
-async function buatLaporan(){
-  el('loading').textContent = 'Mengambil data laporan dari server...';
-  const query = new URLSearchParams({
-    action: "GET_LAPORAN_DATA",
-    jenis: jenis,
-    tanggal: el('tanggal').value,
-    tanggalMulai: el('tanggalMulai').value,
-    tanggalSelesai: el('tanggalSelesai').value,
-    bulan: el('bulan').value,
-    tahun: el('tahun').value,
-    semester: el('semester').value,
-    kelas: el('kelas').value
-  });
-  
-  try {
-    const res = await fetch(`${GAS_WEB_APP_URL}?${query.toString()}`, { redirect: 'follow' });
-    const r = await res.json();
-    el('loading').textContent = '';
-    if(!r || (!r.success && !r.berhasil)){ alert((r && (r.message || r.pesan)) || 'Data laporan tidak tersedia.'); return; }
-    renderReport(r);
-  } catch(e) {
-    el('loading').textContent = '';
-    alert('Gagal membuat laporan: ' + e.message);
-  }
-}
+      const headerRow = document.getElementById("table-header-row");
+      const bodyRows = document.getElementById("table-body-rows");
 
-function renderReport(r){
-  el('judulLaporan').textContent = 'LAPORAN ABSENSI ' + (r.jenis || jenis);
-  const kelasCetak = el('kelas').value || 'Semua Kelas';
-  el('filterCetak').textContent = 'Kelas: ' + kelasCetak;
-  el('periodeCetak').textContent = 'Periode: ' + (r.periode || '-');
-  
-  const sum = r.summary || { hadir:0, terlambat:0, bolos:0, alpa:0, sakit:0, izin:0, persentase:0 };
-  el('kHadir').textContent = fmt(sum.hadir);
-  el('kTerlambat').textContent = fmt(sum.terlambat);
-  el('kBolos').textContent = fmt(sum.bolos);
-  el('kAlpa').textContent = fmt(sum.alpa);
-  el('kSakit').textContent = fmt(sum.sakit);
-  el('kIzin').textContent = fmt(sum.izin);
-  el('kPersen').textContent = pct(sum.persentase);
-  
-  const head = el('thead'), body = el('tbody');
-  const rows = r.rows || r.data || [];
-  
-  if(jenis === 'HARIAN'){
-    head.innerHTML = '<tr><th>No.</th><th>NISN</th><th>Nama Siswa</th><th>Absen Pagi</th><th>Status Apel</th><th>Absen Siang</th><th>Keterangan</th></tr>';
-    if(!rows.length){ body.innerHTML = '<tr><td colspan="7" class="empty">Belum ada data absensi pada tanggal tersebut.</td></tr>'; return; }
-    body.innerHTML = rows.map((x, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(x.nisn || x.nis || '-') + '</td><td><b>' + esc(x.nama) + '</b></td><td>' + esc(x.jam_pagi || x.pagi || '-') + '</td><td>' + badgeApel(x.status_pagi || x.apel) + '</td><td>' + esc(x.jam_siang || x.siang || '-') + '</td><td>' + badgeStatus(x.status_akhir || x.statusAkhir) + '</td></tr>').join('');
-  } else {
-    head.innerHTML = '<tr><th rowspan="2">No.</th><th rowspan="2">NISN</th><th rowspan="2">Nama Siswa</th><th colspan="6" style="text-align:center">Kehadiran</th><th rowspan="2">Persentase</th></tr><tr><th>Hadir</th><th>Izin</th><th>Alpa</th><th>Sakit</th><th>Terlambat</th><th>Bolos</th></tr>';
-    if(!rows.length){ body.innerHTML = '<tr><td colspan="10" class="empty">Belum ada data rekap pada periode tersebut.</td></tr>'; return; }
-    body.innerHTML = rows.map((x, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(x.nisn || x.nis || '-') + '</td><td><b>' + esc(x.nama) + '</b></td><td>' + fmt(x.hadir) + '</td><td>' + fmt(x.izin) + '</td><td>' + fmt(x.alpa) + '</td><td>' + fmt(x.sakit) + '</td><td>' + fmt(x.terlambat) + '</td><td>' + fmt(x.bolos) + '</td><td><b>' + pct(x.persentase) + '</b></td></tr>').join('');
-  }
-}
+      if (data.jenis === "HARIAN") {
+        headerRow.innerHTML = `
+          <th class="border border-gray-400 p-2 text-center w-10">No</th>
+          <th class="border border-gray-400 p-2 text-left">NISN</th>
+          <th class="border border-gray-400 p-2 text-left">Nama Siswa</th>
+          <th class="border border-gray-400 p-2 text-center">Kelas</th>
+          <th class="border border-gray-400 p-2 text-center">Jam Pagi</th>
+          <th class="border border-gray-400 p-2 text-center">Status Pagi</th>
+          <th class="border border-gray-400 p-2 text-center">Jam Siang</th>
+          <th class="border border-gray-400 p-2 text-center">Status Akhir</th>
+        `;
 
-function badgeStatus(s){
-  const v = String(s || '-').toUpperCase();
-  const cls = {HADIR:'hadir', TERLAMBAT:'terlambat', BOLOS:'bolos', ALPA:'alpa', SAKIT:'sakit', IZIN:'izin', KEGIATAN:'kegiatan'}[v] || '';
-  return '<span class="badge ' + cls + '">' + esc(v) + '</span>';
-}
+        bodyRows.innerHTML = data.rows.map((r, i) => `
+          <tr class="hover:bg-gray-50">
+            <td class="border border-gray-400 p-1.5 text-center">${i + 1}</td>
+            <td class="border border-gray-400 p-1.5">${r.nisn || '-'}</td>
+            <td class="border border-gray-400 p-1.5 font-bold">${r.nama}</td>
+            <td class="border border-gray-400 p-1.5 text-center">${r.kelas}</td>
+            <td class="border border-gray-400 p-1.5 text-center">${r.jam_pagi || '-'}</td>
+            <td class="border border-gray-400 p-1.5 text-center">${r.status_pagi || '-'}</td>
+            <td class="border border-gray-400 p-1.5 text-center">${r.jam_siang || '-'}</td>
+            <td class="border border-gray-400 p-1.5 text-center font-bold">${r.status_akhir}</td>
+          </tr>
+        `).join('');
 
-function badgeApel(s){
-  const v = String(s || '-').toUpperCase();
-  return v === 'TERLAMBAT' ? '<span class="badge terlambat">TERLAMBAT</span>' : esc(v);
-}
+      } else {
+        headerRow.innerHTML = `
+          <th class="border border-gray-400 p-2 text-center w-10">No</th>
+          <th class="border border-gray-400 p-2 text-left">NISN</th>
+          <th class="border border-gray-400 p-2 text-left">Nama Siswa</th>
+          <th class="border border-gray-400 p-2 text-center">Kelas</th>
+          <th class="border border-gray-400 p-2 text-center">Hadir</th>
+          <th class="border border-gray-400 p-2 text-center">Terlambat</th>
+          <th class="border border-gray-400 p-2 text-center">Izin/Sakit</th>
+          <th class="border border-gray-400 p-2 text-center">Alpa/Bolos</th>
+          <th class="border border-gray-400 p-2 text-center">% Hadir</th>
+        `;
 
-function resetForm(){
-  jenis = 'HARIAN'; pilihJenis('HARIAN');
-  el('tanggal').value = today(); el('tanggalMulai').value = today(); el('tanggalSelesai').value = today();
-  el('kelas').value = '';
-  el('tbody').innerHTML = '<tr><td class="empty">Belum ada laporan.</td></tr>';
-}
+        bodyRows.innerHTML = data.rows.map((r, i) => `
+          <tr class="hover:bg-gray-50">
+            <td class="border border-gray-400 p-1.5 text-center">${i + 1}</td>
+            <td class="border border-gray-400 p-1.5">${r.nisn || '-'}</td>
+            <td class="border border-gray-400 p-1.5 font-bold">${r.nama}</td>
+            <td class="border border-gray-400 p-1.5 text-center">${r.kelas}</td>
+            <td class="border border-gray-400 p-1.5 text-center font-bold text-emerald-700">${r.hadir}</td>
+            <td class="border border-gray-400 p-1.5 text-center text-amber-700">${r.terlambat}</td>
+            <td class="border border-gray-400 p-1.5 text-center text-indigo-700">${(r.izin || 0) + (r.sakit || 0)}</td>
+            <td class="border border-gray-400 p-1.5 text-center text-red-700">${(r.alpa || 0) + (r.bolos || 0)}</td>
+            <td class="border border-gray-400 p-1.5 text-center font-black">${r.persentase}%</td>
+          </tr>
+        `).join('');
+      }
+    }
 
-function cetak(){
-  el('tanggalCetak').textContent = new Date().toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
-  el('tempatCetak').textContent = el('tempatTtd').value.trim() || '';
-  window.print();
-}
+    async function loadMasterSettings() {
+      const imgLogo = document.getElementById("img-logo-kop");
 
-el('tanggal').addEventListener('change', () => { if(jenis === 'HARIAN') buatLaporan(); });
-loadSettings();
-pilihJenis('HARIAN');
-</script>
+      // Prioritas 1: Ambil URL dari Server Google Sheet
+      try {
+        const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_LAPORAN_SETTINGS`);
+        const data = await res.json();
+
+        if (data.success) {
+          const st = data.settings || {};
+          const schoolName = st.SCHOOL_NAME || "SMK NEGERI 1 WAKATOBI";
+          const principalName = st.PRINCIPAL_NAME || "-";
+          const principalNip = st.PRINCIPAL_NIP || "-";
+          const logoUrl = st.LOGO_KOP || localStorage.getItem("LOGO_KOP");
+
+          document.getElementById("kop-nama-sekolah").innerText = schoolName;
+          document.getElementById("ttd-nama-kepsek").innerText = principalName;
+          document.getElementById("ttd-nip-kepsek").innerText = `NIP. ${principalNip}`;
+
+          if (logoUrl) {
+            imgLogo.src = logoUrl;
+            imgLogo.classList.remove("hidden");
+            localStorage.setItem("LOGO_KOP", logoUrl);
+          }
+
+          // Populate Kelas Dropdown
+          const classes = [...new Set((data.students || []).map(s => s.kelas))].filter(Boolean).sort();
+          document.getElementById("filter-kelas").innerHTML = '<option value="ALL">Semua Kelas</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+      } catch (e) {
+        // Fallback jika offline: Pakai LocalStorage
+        const localLogo = localStorage.getItem("LOGO_KOP");
+        if (localLogo) {
+          imgLogo.src = localLogo;
+          imgLogo.classList.remove("hidden");
+        }
+      }
+
+      const d = new Date();
+      const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      document.getElementById("ttd-tempat-tanggal").innerText = `Wakatobi, ${d.getDate()} ${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+      document.getElementById("input-tgl-harian").value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function uploadLogoKop(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById("logo-upload-status");
+      statusEl.innerText = "Mengompres & Mengunggah...";
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64Data = e.target.result;
+        const imgLogo = document.getElementById("img-logo-kop");
+        imgLogo.src = base64Data;
+        imgLogo.classList.remove("hidden");
+
+        // Kirim ke Google Apps Script untuk disimpan permanen ke Google Drive
+        fetch(GAS_WEB_APP_URL, {
+          method: "POST",
+          mode: "cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "SAVE_LAPORAN_SETTINGS", settings: { LOGO_KOP: base64Data } })
+        })
+        .then(res => res.json())
+        .then(result => {
+          if (result.success) {
+            statusEl.innerText = "Logo Tersimpan Permanen!";
+            loadMasterSettings();
+          } else {
+            statusEl.innerText = "Tersimpan Lokal.";
+          }
+        })
+        .catch(() => {
+          statusEl.innerText = "Tersimpan Lokal (Offline).";
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    window.onload = () => {
+      toggleFilterInputs();
+      loadMasterSettings();
+    };
+  </script>
 </body>
 </html>
