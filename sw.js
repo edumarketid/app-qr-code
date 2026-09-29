@@ -1,9 +1,8 @@
-const CACHE_NAME = 'absensi-app-cache-v2.26';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'absensi-qr-v2.60';
+const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './laporan.html',
-  './kartuqrcode.html',
+  './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
@@ -11,29 +10,23 @@ const STATIC_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
 ];
 
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-  e.waitUntil(
+// Tahap Install: Caching Aset Statis
+self.addEventListener('install', (event) => {
+  event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      const cachePromises = STATIC_ASSETS.map(url => {
-        return fetch(url).then(res => {
-          if (res.status === 200 || res.type === 'opaque') {
-            return cache.put(url, res);
-          }
-        }).catch(err => console.log('Fail caching: ', url));
-      });
-      return Promise.all(cachePromises);
-    })
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
+// Tahap Activate: Pembersihan Cache Lama
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
           }
         })
       );
@@ -41,25 +34,30 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-self.addEventListener('fetch', (e) => {
-  if (e.request.url.includes('script.google.com')) {
+// Tahap Fetch: Strategi Cache First, Network Fallback
+self.addEventListener('fetch', (event) => {
+  // Hanya tangani permintaan GET
+  if (event.request.method !== 'GET') return;
+
+  // Abaikan caching untuk panggilan API Google Apps Script secara langsung
+  if (event.request.url.includes('script.google.com')) {
     return;
   }
-  e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
+
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(e.request).then((networkResponse) => {
-        if (e.request.method === 'GET') {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, responseToCache);
-          });
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
         }
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
         return networkResponse;
-      }).catch(() => {
-        return caches.match('./index.html');
       });
     })
   );
