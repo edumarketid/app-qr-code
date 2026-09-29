@@ -1,4 +1,4 @@
-const CACHE_NAME = 'absensi-app-cache-v2.26';
+const CACHE_NAME = 'absensi-app-cache-v2.60';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -15,12 +15,12 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      const cachePromises = STATIC_ASSETS.map(url => {
-        return fetch(url).then(res => {
+      const cachePromises = STATIC_ASSETS.map((url) => {
+        return fetch(url).then((res) => {
           if (res.status === 200 || res.type === 'opaque') {
             return cache.put(url, res);
           }
-        }).catch(err => console.log('Fail caching: ', url));
+        }).catch((err) => console.log('Fail caching ', url));
       });
       return Promise.all(cachePromises);
     })
