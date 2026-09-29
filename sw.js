@@ -1,4 +1,4 @@
-const CACHE_NAME = 'absensi-qr-v2.60';
+const CACHE_NAME = 'absensi-qr-v2.59';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
