@@ -1,4 +1,4 @@
-const CACHE_NAME = 'absensi-app-cache-v2.61';
+const CACHE_NAME = 'absensi-app-cache-v2.62';
 const STATIC_ASSETS = [
   './',
   './index.html',
