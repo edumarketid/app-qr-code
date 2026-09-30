@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#0b3c5d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Sistem Absensi Murid - v2.60 Presisi</title>
-  <link rel="manifest" href="./manifest.json">
+  <title>Sistem Absensi Murid - v2.61 Presisi</title>
+  <link rel="manifest" href='data:application/manifest+json,{"name":"Sistem Absensi Murid","short_name":"AbsensiQR","start_url":"./index.html","display":"standalone","background_color":"#0b3c5d","theme_color":"#0b3c5d","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"512x512","type":"image/png"}]}'>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -37,7 +37,7 @@
             <span id="status-text" class="text-xs font-semibold">Memeriksa...</span>
           </div>
           <div class="flex items-center justify-end gap-1 mt-0.5">
-            <span id="app-version-tag" class="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-1.5 py-0.2 rounded-md border border-emerald-500/30">v2.60</span>
+            <span id="app-version-tag" class="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-1.5 py-0.2 rounded-md border border-emerald-500/30">v2.61</span>
             <span id="app-role-badge" onclick="handleRoleBadgeClick()" class="text-[10px] font-bold text-amber-300 bg-amber-950/60 px-1.5 py-0.2 rounded-md border border-amber-500/30 cursor-pointer select-none">PETUGAS</span>
           </div>
         </div>
@@ -618,6 +618,11 @@
         <div>
           <label class="block text-[10px] font-bold text-gray-600 mb-1">Kelas</label>
           <input type="text" id="new-std-kelas" placeholder="Kelas" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs">
+        </div>
+        <!-- FITUR PEMBARUAN: KOLOM TTL -->
+        <div>
+          <label class="block text-[10px] font-bold text-gray-600 mb-1">Tempat, Tanggal Lahir (TTL)</label>
+          <input type="text" id="new-std-ttl" placeholder="Contoh: Wakatobi, 12 Januari 2008" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs">
         </div>
         <button onclick="saveNewStudentToDB()" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-md"><i class="fa-solid fa-floppy-disk"></i> Simpan Siswa Baru</button>
       </div>
@@ -1507,6 +1512,7 @@
         document.getElementById('new-std-nisn').value = "";
         document.getElementById('new-std-nama').value = "";
         document.getElementById('new-std-kelas').value = "";
+        document.getElementById('new-std-ttl').value = ""; // Reset input TTL
       }
       modal.classList.toggle('hidden'); 
     }
@@ -1857,7 +1863,7 @@
 
         let matchStatus = false;
         if (selectedStatusFilter === "ALL") {
-          matchStatus = (!targetStatus || targetStatus === "" || evalStatus === "ALPA" || evalStatus === "BELUM");
+          matchStatus = true; 
         } else {
           matchStatus = (evalStatus === selectedStatusFilter);
         }
@@ -1963,12 +1969,13 @@
       setManualPresensiAction(idSiswa, status, targetDate);
     }
 
+    /* FITUR PEMBARUAN: KOREKSI STATUS PRESENSI (MENGEMBALIKAN KE ALPA) */
     function renderMonitoringActionListFiltered(targetDate, studentItems, isPastLimit, selectedSessionFilter, selectedStatusFilter) {
       const container = document.getElementById('monitoring-student-action-list');
       const badgeEl = document.getElementById('monitoring-count-badge');
       const headerTitleEl = document.getElementById('monitoring-action-header-title');
 
-      headerTitleEl.innerText = "Belum Absen & Aksi Presensi";
+      headerTitleEl.innerText = "Daftar Siswa & Aksi Presensi";
       badgeEl.innerText = `${studentItems.length} Siswa Filtered`;
       badgeEl.className = "text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200";
 
@@ -1980,6 +1987,7 @@
       container.innerHTML = studentItems.map(item => {
         const std = item.student;
         const st = item.status;
+        const isAbsented = item.isAbsented;
         
         let badgeStyle = "bg-gray-100 text-gray-700";
         if (st === "HADIR") badgeStyle = "bg-emerald-100 text-emerald-800";
@@ -2000,11 +2008,15 @@
                 ${st}
               </span>
             </div>
-            <div class="grid grid-cols-4 gap-1.5 pt-1">
+            <div class="grid grid-cols-5 gap-1 pt-1">
               <button onclick="handleActionBtnClick('${std.id_siswa}', 'HADIR')" class="py-1 bg-emerald-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition">Hadir</button>
               <button onclick="handleActionBtnClick('${std.id_siswa}', 'IZIN')" class="py-1 bg-indigo-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition">Izin</button>
               <button onclick="handleActionBtnClick('${std.id_siswa}', 'SAKIT')" class="py-1 bg-blue-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition">Sakit</button>
               <button onclick="handleActionBtnClick('${std.id_siswa}', 'KEGIATAN')" class="py-1 bg-purple-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition">Keg.</button>
+              <!-- TOMBOL KOREKSI ALPA/BATAL -->
+              <button onclick="handleActionBtnClick('${std.id_siswa}', 'ALPA')" class="py-1 bg-rose-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-0.5" title="Koreksi ke Alpa">
+                <i class="fa-solid fa-rotate-left text-[8px]"></i> Alpa
+              </button>
             </div>
           </div>
         `;
@@ -2014,11 +2026,6 @@
     async function setManualPresensiAction(idSiswa, status, targetDate) {
       const student = cachedStudents.find(s => s.id_siswa === idSiswa);
       if (!student) return;
-
-      const itemEl = document.getElementById(`action-item-${idSiswa}`);
-      if (itemEl) {
-        itemEl.classList.add('opacity-0', 'scale-95');
-      }
 
       const selectedSessionFilter = document.getElementById('monitoring-session-filter').value || "PAGI";
       const cleanTargetDate = formatCleanDateLocal(targetDate);
@@ -2052,7 +2059,7 @@
       setTimeout(() => {
         updateMonitoringDashboard();
         renderDashboardView();
-      }, 200);
+      }, 150);
 
       if (navigator.onLine) syncQueueToGAS();
     }
@@ -2077,7 +2084,6 @@
       });
     }
 
-    /* TINDAK LANJUT LOGIC */
     function switchTLTab(tabName) {
       currentTLTab = tabName;
       const btnPending = document.getElementById("tl-tab-btn-pending");
@@ -2455,18 +2461,21 @@
       window.location.reload();
     }
 
+    /* FITUR PEMBARUAN: MENYIMPAN SISWA BARU DENGAN TTL */
     async function saveNewStudentToDB() {
       const idSiswa = document.getElementById('new-std-id').value.trim();
       const nisn = document.getElementById('new-std-nisn').value.trim();
       const nama = document.getElementById('new-std-nama').value.trim();
       const kelas = document.getElementById('new-std-kelas').value.trim();
+      const ttl = document.getElementById('new-std-ttl').value.trim();
+      
       if (!idSiswa || !nama || !kelas) return alert("ID, Nama, dan Kelas Wajib diisi!");
 
-      const newStudent = { id_siswa: idSiswa, nisn: nisn || "-", nama: nama, kelas: kelas, active: true };
+      const newStudent = { id_siswa: idSiswa, nisn: nisn || "-", nama: nama, kelas: kelas, ttl: ttl || "-", active: true };
       const tx = db.transaction("students", "readwrite");
       tx.objectStore("students").put(newStudent);
       tx.oncomplete = () => {
-        alert("Siswa berhasil disimpan!");
+        alert("Siswa baru berhasil disimpan!");
         toggleAddStudentModal();
         loadStudentsView();
       };
