@@ -106,7 +106,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
     </div>
     <div class="buttons">
       <button class="btn primary" onclick="simpanPengaturan()">Simpan Pengaturan</button>
-      <button class="btn secondary" onclick="muatDataDanPengaturan()">Segarkan Data</button>
+      <button class="btn secondary" onclick="muatDataDanPengaturan(true)">Segarkan Data</button>
       <button class="btn green" onclick="window.print()">Cetak Kartu</button>
     </div>
     <div id="status" class="status">Memuat data...</div>
@@ -131,6 +131,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f3f6fa;color:#172033}
 
 <script>
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0wSQS50V0qen_O29TXSE1ngwEao4SMpJyQuUlUISLz5uxvmqqkqQnsAmmoRL0M8Cmqw/exec";
+const CACHE_KARTU_KEY = "CACHE_DATA_KARTU_QR";
 
 let siswa = [], selected = new Set(), logoKiriData = '', logoKananData = '';
 
@@ -147,34 +148,61 @@ function esc(x){ return String(x == null ? '' : x).replace(/[&<>"']/g, m => ({'&
 function escAttr(x){ return String(x == null ? '' : x).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
 function setStatus(t, bad = false){ const e = document.getElementById('status'); e.textContent = t; e.style.color = bad ? '#b91c1c' : '#166534'; }
 
-async function muatDataDanPengaturan() {
-  setStatus('Memuat data siswa & pengaturan dari server...');
-  try {
-    const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`, { redirect: 'follow' });
-    const data = await res.json();
-    
-    if (data && data.success) {
-      siswa = data.students || [];
-      const s = data.settings || {};
+function applyDataToKartuUI(data) {
+  if (!data) return;
+  siswa = data.students || [];
+  const s = data.settings || {};
+
+  const localSchool = localStorage.getItem("SCHOOL_NAME");
+  document.getElementById('namaSekolah').value = s.SCHOOL_NAME || s.namaSekolah || localSchool || '';
+  document.getElementById('warna').value = s.WARNA_KARTU || 'biru';
+  document.getElementById('bingkai').value = s.BINGKAI_KARTU || 'ganda';
+  
+  logoKiriData = s.LOGO_KARTU_KIRI || '';
+  logoKananData = s.LOGO_KARTU_KANAN || '';
+  
+  showLogo('kiri', logoKiriData);
+  showLogo('kanan', logoKananData);
+  
+  renderDaftar();
+  if (siswa.length && selected.size === 0) {
+    pilihSemua(); // Pilih otomatis semua siswa saat pertama kali buka
+  } else {
+    buatPreview();
+  }
+}
+
+async function muatDataDanPengaturan(forceFetch = false) {
+  // 1. Dapatkan Data Lokal Terlebih Dahulu (INSTAN 0 DELAY)
+  const cachedData = localStorage.getItem(CACHE_KARTU_KEY);
+  if (cachedData && !forceFetch) {
+    try {
+      const parsed = JSON.parse(cachedData);
+      applyDataToKartuUI(parsed);
+      setStatus('Berhasil memuat ' + (parsed.students || []).length + ' data siswa dari penyimpanan lokal.');
+    } catch(e) {}
+  } else {
+    setStatus('Memuat data siswa & pengaturan dari server...');
+  }
+
+  // 2. Refresh Latar Belakang jika terhubung Jaringan (Background Sync)
+  if (navigator.onLine) {
+    try {
+      const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`, { redirect: 'follow' });
+      const data = await res.json();
       
-      document.getElementById('namaSekolah').value = s.SCHOOL_NAME || s.namaSekolah || '';
-      document.getElementById('warna').value = s.WARNA_KARTU || 'biru';
-      document.getElementById('bingkai').value = s.BINGKAI_KARTU || 'ganda';
-      
-      logoKiriData = s.LOGO_KARTU_KIRI || '';
-      logoKananData = s.LOGO_KARTU_KANAN || '';
-      
-      showLogo('kiri', logoKiriData);
-      showLogo('kanan', logoKananData);
-      
-      renderDaftar();
-      buatPreview();
-      setStatus('Berhasil memuat ' + siswa.length + ' data siswa!');
-    } else {
-      setStatus('Gagal memuat data dari server.', true);
+      if (data && data.success) {
+        localStorage.setItem(CACHE_KARTU_KEY, JSON.stringify(data));
+        applyDataToKartuUI(data);
+        setStatus('Berhasil memuat ' + (data.students || []).length + ' data siswa!');
+      } else if (!cachedData) {
+        setStatus('Gagal memuat data dari server.', true);
+      }
+    } catch(err) {
+      if (!cachedData) {
+        setStatus('Error koneksi: ' + err.message, true);
+      }
     }
-  } catch(err) {
-    setStatus('Error koneksi: ' + err.message, true);
   }
 }
 
@@ -198,17 +226,22 @@ function showLogo(pos, data) {
 }
 
 async function simpanPengaturan() {
+  const settingsObj = {
+    SCHOOL_NAME: document.getElementById('namaSekolah').value.trim(),
+    WARNA_KARTU: document.getElementById('warna').value,
+    BINGKAI_KARTU: document.getElementById('bingkai').value,
+    LOGO_KARTU_KIRI: logoKiriData,
+    LOGO_KARTU_KANAN: logoKananData
+  };
+
   const payload = {
     action: "SAVE_KARTU_QR_SETTINGS",
-    data: {
-      SCHOOL_NAME: document.getElementById('namaSekolah').value.trim(),
-      WARNA_KARTU: document.getElementById('warna').value,
-      BINGKAI_KARTU: document.getElementById('bingkai').value,
-      LOGO_KARTU_KIRI: logoKiriData,
-      LOGO_KARTU_KANAN: logoKananData
-    }
+    data: settingsObj
   };
   
+  // Simpan nama sekolah ke cache global
+  if(settingsObj.SCHOOL_NAME) localStorage.setItem("SCHOOL_NAME", settingsObj.SCHOOL_NAME);
+
   setStatus('Menyimpan pengaturan & mengunggah logo ke Google Drive...');
   try {
     const response = await fetch(GAS_WEB_APP_URL, {
@@ -220,12 +253,12 @@ async function simpanPengaturan() {
     const result = await response.json();
     if (result && result.success) {
       setStatus(result.message || 'Pengaturan & logo berhasil disimpan!');
-      await muatDataDanPengaturan();
+      await muatDataDanPengaturan(true);
     } else {
       setStatus((result && result.message) || 'Gagal menyimpan.', true);
     }
   } catch(e) {
-    setStatus('Gagal menyimpan: ' + e.message, true);
+    setStatus('Tersimpan secara lokal. (Server tidak merespons)', true);
   }
 }
 
@@ -242,8 +275,8 @@ function renderDaftar() {
 }
 
 function toggleSiswa(id, on) { if (on) selected.add(id); else selected.delete(id); }
-function pilihSemua() { siswa.forEach(s => selected.add(s.id_siswa)); renderDaftar(); }
-function hapusSemua() { selected.clear(); renderDaftar(); }
+function pilihSemua() { siswa.forEach(s => selected.add(s.id_siswa)); renderDaftar(); buatPreview(); }
+function hapusSemua() { selected.clear(); renderDaftar(); buatPreview(); }
 
 function buatPreview() {
   const list = siswa.filter(s => selected.has(s.id_siswa));
