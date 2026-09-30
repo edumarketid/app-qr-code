@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b3c5d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Sistem Absensi Murid - v2.61 Presisi</title>
+  <title>Sistem Absensi Murid - v2.62 Presisi</title>
   <link rel="manifest" href='data:application/manifest+json,{"name":"Sistem Absensi Murid","short_name":"AbsensiQR","start_url":"./index.html","display":"standalone","background_color":"#0b3c5d","theme_color":"#0b3c5d","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3135/3135715.png","sizes":"512x512","type":"image/png"}]}'>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -37,7 +37,7 @@
             <span id="status-text" class="text-xs font-semibold">Memeriksa...</span>
           </div>
           <div class="flex items-center justify-end gap-1 mt-0.5">
-            <span id="app-version-tag" class="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-1.5 py-0.2 rounded-md border border-emerald-500/30">v2.61</span>
+            <span id="app-version-tag" class="text-[10px] font-mono text-emerald-300 bg-emerald-950/60 px-1.5 py-0.2 rounded-md border border-emerald-500/30">v2.62</span>
             <span id="app-role-badge" onclick="handleRoleBadgeClick()" class="text-[10px] font-bold text-amber-300 bg-amber-950/60 px-1.5 py-0.2 rounded-md border border-amber-500/30 cursor-pointer select-none">PETUGAS</span>
           </div>
         </div>
@@ -195,7 +195,7 @@
 
         <div class="bg-white p-4 rounded-2xl border border-gray-200 shadow-sm space-y-3 mb-3">
           <h3 class="font-bold text-xs text-blue-900 border-b border-gray-100 pb-2"><i class="fa-solid fa-download text-blue-600"></i> 1. Unduh Template CSV</h3>
-          <p class="text-[11px] text-gray-600 leading-relaxed">Gunakan format file CSV berikut untuk mengisi data siswa baru secara cepat:</p>
+          <p class="text-[11px] text-gray-600 leading-relaxed">Gunakan format file CSV dengan tanda petik ganda agar Tempat, Tanggal Lahir terbaca utuh:</p>
           <button onclick="downloadCSVTemplate()" class="w-full bg-blue-50 text-blue-700 border border-blue-200 font-bold py-2 rounded-xl text-xs shadow-sm flex items-center justify-center gap-2">
             <i class="fa-solid fa-file-csv text-base"></i> Unduh Format CSV Siswa
           </button>
@@ -541,7 +541,7 @@
         </div>
         <div>
           <label class="block text-[10px] font-bold text-gray-600 mb-1">Tempat, Tanggal Lahir (TTL)</label>
-          <input type="text" id="edit-modal-ttl" placeholder="Contoh: Makassar, 12 Januari 2008" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs text-gray-800">
+          <input type="text" id="edit-modal-ttl" placeholder="Contoh: Jakarta, 12 Desember 2012" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs text-gray-800">
         </div>
         <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-gray-200">
           <span class="text-xs font-bold text-gray-800">Status Keaktifan Siswa:</span>
@@ -619,10 +619,9 @@
           <label class="block text-[10px] font-bold text-gray-600 mb-1">Kelas</label>
           <input type="text" id="new-std-kelas" placeholder="Kelas" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs">
         </div>
-        <!-- FITUR PEMBARUAN: KOLOM TTL -->
         <div>
           <label class="block text-[10px] font-bold text-gray-600 mb-1">Tempat, Tanggal Lahir (TTL)</label>
-          <input type="text" id="new-std-ttl" placeholder="Contoh: Wakatobi, 12 Januari 2008" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs">
+          <input type="text" id="new-std-ttl" placeholder="Contoh: Jakarta, 12 Desember 2012" class="w-full px-3 py-2 bg-slate-50 border border-gray-200 rounded-xl text-xs">
         </div>
         <button onclick="saveNewStudentToDB()" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-xs shadow-md"><i class="fa-solid fa-floppy-disk"></i> Simpan Siswa Baru</button>
       </div>
@@ -1019,7 +1018,7 @@
     }
 
     function downloadCSVTemplate() {
-      const csvHeader = "ID_SISWA,NISN,NAMA_SISWA,KELAS,TTL\nS101,0081234567,Ahmad Fauzi,X TKR 1,Makassar 12 Jan 2008\nS102,0087654321,Siti Rahma,X TKR 1,Gowa 15 Feb 2008\nS103,0089988776,Budi Santoso,X TKR 2,Maros 20 Mar 2008";
+      const csvHeader = "ID_SISWA,NISN,NAMA_SISWA,KELAS,TTL\nS101,0081234567,Ahmad Fauzi,X TKR 1,\"Jakarta, 12 Desember 2012\"\nS102,0087654321,Siti Rahma,X TKR 1,\"Makassar, 15 Februari 2012\"\nS103,0089988776,Budi Santoso,X TKR 2,\"Wakatobi, 20 Maret 2012\"";
       const blob = new Blob([csvHeader], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
@@ -1028,6 +1027,26 @@
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    }
+
+    /* FITUR PEMBARUAN: REGEX PARSER CSV MENDUKUNG STRINGS BERKOMA DALAM TANDA PETIK */
+    function parseCSVLine(line) {
+      const pattern = new RegExp(
+        '\\s*("([^"]*(?:""[^"]*)*)"|([^,;]+)|)\\s*(?:[,;]|$)',
+        'g'
+      );
+      const values = [];
+      let match;
+      while ((match = pattern.exec(line)) !== null) {
+        if (match.index === pattern.lastIndex) {
+          pattern.lastIndex++;
+        }
+        let value = match[2] !== undefined ? match[2].replace(/""/g, '"') : match[3];
+        if (value !== undefined) {
+          values.push(value.trim());
+        }
+      }
+      return values;
     }
 
     function previewCSVFile() {
@@ -1043,12 +1062,14 @@
 
         for (let i = 1; i < lines.length; i++) {
           if (!lines[i].trim()) continue;
-          const cols = lines[i].split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
-          if (cols.length >= 3) {
+          
+          const cols = parseCSVLine(lines[i]);
+
+          if (cols.length >= 3 && cols[0]) {
             parsedBatchStudents.push({
               id_siswa: cols[0],
               nisn: cols[1] || "-",
-              nama: cols[2],
+              nama: cols[2] || "",
               kelas: cols[3] || "Umum",
               ttl: cols[4] || "-",
               active: true
@@ -1063,9 +1084,15 @@
         if (parsedBatchStudents.length > 0) {
           previewCount.innerText = `${parsedBatchStudents.length} Siswa Terbaca`;
           previewBox.innerHTML = parsedBatchStudents.map((s, idx) => `
-            <div class="p-1.5 bg-white rounded-lg border border-gray-100 flex items-center justify-between">
-              <div><b>${idx + 1}. ${s.nama}</b> (${s.kelas})</div>
-              <span class="text-[9px] text-gray-500">ID: ${s.id_siswa} | NISN: ${s.nisn}</span>
+            <div class="p-1.5 bg-white rounded-lg border border-gray-100 flex flex-col gap-0.5">
+              <div class="flex items-center justify-between">
+                <b>${idx + 1}. ${s.nama}</b> 
+                <span class="text-[9px] font-extrabold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded">${s.kelas}</span>
+              </div>
+              <div class="text-[9px] text-gray-500 flex justify-between">
+                <span>ID: ${s.id_siswa} | NISN: ${s.nisn}</span>
+                <span class="font-bold text-gray-700">TTL: ${s.ttl}</span>
+              </div>
             </div>
           `).join('');
           previewContainer.classList.remove('hidden');
@@ -1512,7 +1539,7 @@
         document.getElementById('new-std-nisn').value = "";
         document.getElementById('new-std-nama').value = "";
         document.getElementById('new-std-kelas').value = "";
-        document.getElementById('new-std-ttl').value = ""; // Reset input TTL
+        document.getElementById('new-std-ttl').value = "";
       }
       modal.classList.toggle('hidden'); 
     }
@@ -1969,7 +1996,6 @@
       setManualPresensiAction(idSiswa, status, targetDate);
     }
 
-    /* FITUR PEMBARUAN: KOREKSI STATUS PRESENSI (MENGEMBALIKAN KE ALPA) */
     function renderMonitoringActionListFiltered(targetDate, studentItems, isPastLimit, selectedSessionFilter, selectedStatusFilter) {
       const container = document.getElementById('monitoring-student-action-list');
       const badgeEl = document.getElementById('monitoring-count-badge');
@@ -2013,7 +2039,6 @@
               <button onclick="handleActionBtnClick('${std.id_siswa}', 'IZIN')" class="py-1 bg-indigo-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition">Izin</button>
               <button onclick="handleActionBtnClick('${std.id_siswa}', 'SAKIT')" class="py-1 bg-blue-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition">Sakit</button>
               <button onclick="handleActionBtnClick('${std.id_siswa}', 'KEGIATAN')" class="py-1 bg-purple-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition">Keg.</button>
-              <!-- TOMBOL KOREKSI ALPA/BATAL -->
               <button onclick="handleActionBtnClick('${std.id_siswa}', 'ALPA')" class="py-1 bg-rose-600 text-white font-bold text-[9px] rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition flex items-center justify-center gap-0.5" title="Koreksi ke Alpa">
                 <i class="fa-solid fa-rotate-left text-[8px]"></i> Alpa
               </button>
@@ -2440,13 +2465,18 @@
       }
     }
 
-    async function clearAppCacheOnly() {
+    function clearAppCacheOnly() {
       if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(key => caches.delete(key)));
+        caches.keys().then(keys => {
+          Promise.all(keys.map(key => caches.delete(key))).then(() => {
+            alert("Cache file aplikasi berhasil dibersihkan!");
+            window.location.reload();
+          });
+        });
+      } else {
+        alert("Cache berhasil dibersihkan!");
+        window.location.reload();
       }
-      alert("Cache file aplikasi berhasil dibersihkan!");
-      window.location.reload();
     }
 
     function forceCheckAppUpdate() {
@@ -2461,7 +2491,6 @@
       window.location.reload();
     }
 
-    /* FITUR PEMBARUAN: MENYIMPAN SISWA BARU DENGAN TTL */
     async function saveNewStudentToDB() {
       const idSiswa = document.getElementById('new-std-id').value.trim();
       const nisn = document.getElementById('new-std-nisn').value.trim();
