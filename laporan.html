@@ -127,6 +127,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f7fb;color:#172033}
 
 <script>
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0wSQS50V0qen_O29TXSE1ngwEao4SMpJyQuUlUISLz5uxvmqqkqQnsAmmoRL0M8Cmqw/exec";
+const CACHE_SETTINGS_KEY = "CACHE_LAPORAN_SETTINGS";
 
 let logoData = ''; 
 let jenis = 'HARIAN';
@@ -137,39 +138,71 @@ function fmt(x){ return new Intl.NumberFormat('id-ID').format(Number(x)||0); }
 function pct(x){ return (Number(x)||0).toLocaleString('id-ID',{maximumFractionDigits:2})+'%'; }
 function today(){ return new Date().toISOString().slice(0,10); }
 
-async function loadSettings(){
-  try {
-    const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`, { redirect: 'follow' });
-    const data = await res.json();
-    if (data && data.success) {
-      const students = data.students || [];
-      const s = data.settings || {};
-      
-      el('namaSekolahGlobal').value = s.SCHOOL_NAME || s.namaSekolah || '';
-      el('sekolahCetak').textContent = s.SCHOOL_NAME || s.namaSekolah || 'Sekolah';
-      el('namaKepala').value = s.PRINCIPAL_NAME || s.namaKepala || '';
-      el('nipKepala').value = s.PRINCIPAL_NIP || s.nipKepala || '';
-      el('tempatTtd').value = s.TEMPAT_TTD || s.tempatTtd || '';
-      
-      logoData = s.LOGO_KOP || s.logoData || '';
-      showLogo(logoData);
-      
-      renderIdentity({
-        namaKepala: el('namaKepala').value,
-        nipKepala: el('nipKepala').value
-      });
-
-      const classes = [...new Set(students.map(std => std.kelas))].filter(Boolean).sort();
-      fill('kelas', classes, 'Semua Kelas');
-    }
-  } catch(e) {
-    console.error("Gagal memuat pengaturan:", e);
+function applySettingsToUI(s, students = []) {
+  if (s) {
+    el('namaSekolahGlobal').value = s.SCHOOL_NAME || s.namaSekolah || '';
+    el('sekolahCetak').textContent = s.SCHOOL_NAME || s.namaSekolah || 'Sekolah';
+    el('namaKepala').value = s.PRINCIPAL_NAME || s.namaKepala || '';
+    el('nipKepala').value = s.PRINCIPAL_NIP || s.nipKepala || '';
+    el('tempatTtd').value = s.TEMPAT_TTD || s.tempatTtd || '';
+    
+    logoData = s.LOGO_KOP || s.logoData || '';
+    showLogo(logoData);
+    
+    renderIdentity({
+      namaKepala: el('namaKepala').value,
+      nipKepala: el('nipKepala').value
+    });
   }
-  
+
+  if (students && students.length) {
+    const classes = [...new Set(students.map(std => std.kelas))].filter(Boolean).sort();
+    fill('kelas', classes, 'Semua Kelas');
+  }
+}
+
+async function loadSettings(){
   el('tanggal').value = today();
   el('tanggalMulai').value = today();
   el('tanggalSelesai').value = today();
   el('bulan').value = String(new Date().getMonth() + 1);
+
+  // 1. Dapatkan Pengaturan Lokal Terlebih Dahulu (INSTAN 0 DELAY)
+  const localSchool = localStorage.getItem("SCHOOL_NAME");
+  const localPrincipal = localStorage.getItem("PRINCIPAL_NAME");
+  const localNip = localStorage.getItem("PRINCIPAL_NIP");
+  const localKop = localStorage.getItem("LOGO_KOP");
+  const localTempat = localStorage.getItem("TEMPAT_TTD");
+  const cachedSettings = localStorage.getItem(CACHE_SETTINGS_KEY);
+
+  if (cachedSettings) {
+    try {
+      const parsed = JSON.parse(cachedSettings);
+      applySettingsToUI(parsed.settings, parsed.students);
+    } catch(e) {}
+  } else if (localSchool || localPrincipal || localKop) {
+    applySettingsToUI({
+      SCHOOL_NAME: localSchool,
+      PRINCIPAL_NAME: localPrincipal,
+      PRINCIPAL_NIP: localNip,
+      LOGO_KOP: localKop,
+      TEMPAT_TTD: localTempat
+    });
+  }
+
+  // 2. Refresh di Latar Belakang jika terhubung Jaringan (Background Sync)
+  if (navigator.onLine) {
+    try {
+      const res = await fetch(`${GAS_WEB_APP_URL}?action=GET_KARTU_QR_DATA`, { redirect: 'follow' });
+      const data = await res.json();
+      if (data && data.success) {
+        localStorage.setItem(CACHE_SETTINGS_KEY, JSON.stringify(data));
+        applySettingsToUI(data.settings || {}, data.students || []);
+      }
+    } catch(e) {
+      console.error("Gagal memperbarui pengaturan jaringan:", e);
+    }
+  }
 }
 
 function fill(id, a, first){
@@ -196,20 +229,29 @@ function showLogo(src){
 }
 
 async function simpanPengaturan(){
+  const settingsObj = {
+    LOGO_KOP: logoData,
+    SCHOOL_NAME: el('namaSekolahGlobal').value.trim(),
+    PRINCIPAL_NAME: el('namaKepala').value.trim(),
+    PRINCIPAL_NIP: el('nipKepala').value.trim(),
+    TEMPAT_TTD: el('tempatTtd').value.trim()
+  };
+
   const data = {
     action: "SAVE_SETTINGS",
-    settings: {
-      LOGO_KOP: logoData,
-      SCHOOL_NAME: el('namaSekolahGlobal').value.trim(),
-      PRINCIPAL_NAME: el('namaKepala').value.trim(),
-      PRINCIPAL_NIP: el('nipKepala').value.trim(),
-      TEMPAT_TTD: el('tempatTtd').value.trim()
-    }
+    settings: settingsObj
   };
-  
+
+  // Simpan instan ke localStorage
+  localStorage.setItem("SCHOOL_NAME", settingsObj.SCHOOL_NAME);
+  localStorage.setItem("PRINCIPAL_NAME", settingsObj.PRINCIPAL_NAME);
+  localStorage.setItem("PRINCIPAL_NIP", settingsObj.PRINCIPAL_NIP);
+  if(logoData) localStorage.setItem("LOGO_KOP", logoData);
+  localStorage.setItem("TEMPAT_TTD", settingsObj.TEMPAT_TTD);
+
   el('statusSimpan').className = 'status';
   el('statusSimpan').textContent = 'Menyimpan & mengunggah kop ke Google Drive...';
-  
+
   try {
     const res = await fetch(GAS_WEB_APP_URL, {
       method: 'POST',
@@ -228,7 +270,7 @@ async function simpanPengaturan(){
     }
   } catch(e) {
     el('statusSimpan').className = 'status danger';
-    el('statusSimpan').textContent = e.message;
+    el('statusSimpan').textContent = 'Tersimpan secara lokal. (Server tidak merespons)';
   }
 }
 
@@ -248,9 +290,12 @@ function pilihJenis(j){
   el('judulLaporan').textContent = 'LAPORAN ABSENSI ' + j;
 }
 
+function getCacheReportKey(params) {
+  return `CACHE_DATA_LAPORAN_${params.jenis}_${params.tanggal}_${params.tanggalMulai}_${params.tanggalSelesai}_${params.bulan}_${params.tahun}_${params.semester}_${params.kelas}`;
+}
+
 async function buatLaporan(){
-  el('loading').textContent = 'Mengambil data laporan dari server...';
-  const query = new URLSearchParams({
+  const params = {
     action: "GET_LAPORAN_DATA",
     jenis: jenis,
     tanggal: el('tanggal').value,
@@ -260,17 +305,46 @@ async function buatLaporan(){
     tahun: el('tahun').value,
     semester: el('semester').value,
     kelas: el('kelas').value
-  });
-  
-  try {
-    const res = await fetch(`${GAS_WEB_APP_URL}?${query.toString()}`, { redirect: 'follow' });
-    const r = await res.json();
+  };
+
+  const cacheKey = getCacheReportKey(params);
+  const cachedReport = localStorage.getItem(cacheKey);
+
+  // 1. Tampilkan Hasil Cache Secara Instan Jika Ada
+  if (cachedReport) {
+    try {
+      const parsedData = JSON.parse(cachedReport);
+      renderReport(parsedData);
+      el('loading').textContent = '';
+    } catch(e) {}
+  } else {
+    el('loading').textContent = 'Mengambil data laporan dari server...';
+  }
+
+  // 2. Lakukan Fetch Jaringan & Pembaruan Latar Belakang
+  if (navigator.onLine) {
+    const query = new URLSearchParams(params);
+    try {
+      const res = await fetch(`${GAS_WEB_APP_URL}?${query.toString()}`, { redirect: 'follow' });
+      const r = await res.json();
+      el('loading').textContent = '';
+      if(!r || (!r.success && !r.berhasil)){ 
+        if(!cachedReport) alert((r && (r.message || r.pesan)) || 'Data laporan tidak tersedia.'); 
+        return; 
+      }
+      
+      // Simpan ke Cache Lokal
+      localStorage.setItem(cacheKey, JSON.stringify(r));
+      renderReport(r);
+    } catch(e) {
+      el('loading').textContent = '';
+      if (!cachedReport) {
+        alert('Gagal membuat laporan: ' + e.message);
+      }
+    }
+  } else if (!cachedReport) {
     el('loading').textContent = '';
-    if(!r || (!r.success && !r.berhasil)){ alert((r && (r.message || r.pesan)) || 'Data laporan tidak tersedia.'); return; }
-    renderReport(r);
-  } catch(e) {
-    el('loading').textContent = '';
-    alert('Gagal membuat laporan: ' + e.message);
+    alert('Perangkat offline dan belum ada cache untuk periode ini.');
   }
 }
 
@@ -328,8 +402,11 @@ function cetak(){
 }
 
 el('tanggal').addEventListener('change', () => { if(jenis === 'HARIAN') buatLaporan(); });
+
+// Inisialisasi awal
 loadSettings();
 pilihJenis('HARIAN');
+buatLaporan(); // Otomatis tampilkan laporan harian dari cache / fetch
 </script>
 </body>
 </html>
