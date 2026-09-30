@@ -1,39 +1,38 @@
-const CACHE_NAME = 'absensi-app-cache-v2.62';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'absensi-qr-v2.62';
+
+// Daftar seluruh aset & halaman yang wajib di-cache di awal (Pre-cache)
+const URLS_TO_CACHE = [
   './',
   './index.html',
   './laporan.html',
   './kartuqrcode.html',
+  './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
   'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
   'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+  'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
 ];
 
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-  e.waitUntil(
+// 1. Install Event: Download & simpan semua modul utama ke cache
+self.addEventListener('install', (event) => {
+  event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      const cachePromises = STATIC_ASSETS.map((url) => {
-        return fetch(url).then((res) => {
-          if (res.status === 200 || res.type === 'opaque') {
-            return cache.put(url, res);
-          }
-        }).catch((err) => console.log('Fail caching ', url));
-      });
-      return Promise.all(cachePromises);
-    })
+      console.log('[Service Worker] Caching all core modules & pages');
+      return cache.addAll(URLS_TO_CACHE);
+    }).then(() => self.skipWaiting())
   );
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
+// 2. Activate Event: Bersihkan cache versi lama jika ada pembaruan
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('[Service Worker] Deleting old cache:', cache);
+            return caches.delete(cache);
           }
         })
       );
@@ -41,25 +40,41 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-self.addEventListener('fetch', (e) => {
-  if (e.request.url.includes('script.google.com')) {
+// 3. Fetch Event: Cache-First Strategy (Buka dari Cache dulu agar Instant, baru update dari Network)
+self.addEventListener('fetch', (event) => {
+  // Abaikan request POST / Google Apps Script
+  if (event.request.method !== 'GET' || event.request.url.includes('script.google.com')) {
     return;
   }
-  e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
+
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
+        // Kembalikan file dari cache secara instan
+        // Sambil mengambil versi terbaru dari jaringan di latar belakang (Stale-While-Revalidate)
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, networkResponse.clone());
+            });
+          }
+        }).catch(() => {/* Abaikan error jaringan jika sedang offline */});
+
         return cachedResponse;
       }
-      return fetch(e.request).then((networkResponse) => {
-        if (e.request.method === 'GET') {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, responseToCache);
-          });
+
+      // Jika file belum ada di cache, ambil dari jaringan lalu simpan
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
         }
+
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
         return networkResponse;
-      }).catch(() => {
-        return caches.match('./index.html');
       });
     })
   );
