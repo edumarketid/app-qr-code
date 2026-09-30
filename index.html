@@ -859,7 +859,7 @@
       const isAdmin = (currentUserRole === "ADMIN");
 
       const items = [
-        { label: "Unggah Kolektif", icon: "fa-file-excel", color: "emerald", action: "toggleView('upload-batch')", adminOnly: false },
+        { label: "Unggah Kolektif", icon: "fa-file-excel", color: "emerald", action: "toggleView('upload-batch')", adminOnly: true },
         { label: "Tambah Siswa", icon: "fa-user-plus", color: "teal", action: "toggleAddStudentModal()", adminOnly: true },
         { label: "Edit Data Siswa", icon: "fa-user-pen", color: "indigo", action: "toggleView('edit-students')", adminOnly: true },
         { label: "Atur Hari Libur", icon: "fa-calendar-day", color: "amber", action: "toggleView('hari-libur')", adminOnly: true },
